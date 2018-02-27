@@ -11,16 +11,12 @@ A POC combining insights derived from L4, Lightning, Eth, Raiden, and Spankchain
   - Bi-directional Payment Channel
   - Crypto Kitties Battle Channel
 - Background Information
-- Channel API
+- Bond Manager API
   - openChannel
   - joinChannel
-  - checkpointState
   - closeChannel
-  - startSettleState
-  - challengeSettleState
-  - closeWithChallenge
-  - getChannel
 - Interpreter API
+  - checkpointState
   - startSettleState
   - challengeSettleState
   - closeWithTimeout
@@ -42,13 +38,13 @@ Special Payment Channel: TODO
 
 Sub-channel: TODO
 
-Interpreters: These are the contracts that hold the logic responsible for assembling state bytes into meaningful representations. ie constructing the balances in a payment channel or determining the winner of a game. They are counterfactually instantiated and provide judgement on valid state transitions and hold the bonds of the channel to be acted upon by interpreted state. The bonds will be held by the channel manager in the future as interpreters will be counterfactually instantiated.
+Interpreters: These are the contracts that hold the logic responsible for assembling state bytes into meaningful representations. ie constructing the balances in a payment channel or determining the winner of a game. They are counterfactually instantiated and provide judgement on valid state transitions.
 
 ### Overview:
 
 This POC is comprised of one on-chain special multisig contract and a system of counterfactually instantiated interepreter contracts that may never be deployed on-chain as long as the channel participants can agree on state transitions. Multiple state channels/games may be played on the same channel bond. Closing the channel will only require reconstructing some final agreed upon state on the bond and not the intermediary final states of any other game that was not challenged and closed without channel consensus. This is like nesting many channels into one bonded channel.
 
-The registry contract builds a reference for agreed upon byte code for interpreters that may be counterfacutally deployed when necessary. Before opening a channel on the bond manager contract, both parties must compile the byte code of the SPC and sign a state containing a message that both parties agree to use this set of rules in case of settlement. The SPC has logic to handle multiple sub-channels attached to its state. When a new channel is to be loaded off-chain, the balances are correctly updated in the state transition to seed the new channel and both parties sign the transition.
+The registry contract builds a reference for agreed upon byte code for interpreters that may be counterfacutally deployed when necessary. Before opening a channel on the bond manager contract, both parties must compile the byte code of the SPC and sign a state containing a message that both parties agree to use this set of rules in case of settlement. The SPC has logic to handle multiple sub-channels attached to its state. When a new channel is to be loaded off-chain, the balances are correctly updated in the state transition to seed the new channel and both parties sign this transition.
 
 To open a channel the client must assemble the initial state (more specs on this to come) with the participants they plan to interact with. They sign this state and pass it to the `openChannel()` function. To join the channel, the participants in the initial state must sign the state and provide this signature to the `joinChannel()` function in the manager. Once both parties in the state have joined the channel it is flagged open and any settlements or closing may begin.
 
