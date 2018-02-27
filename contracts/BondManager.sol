@@ -1,17 +1,3 @@
-// we can get rid of the settlement period logic and just decode state
-// in the happy case, or supply a function that both parties can call 
-// with matching final balances.
-// function closeWallet(_balanceA, _balanceB) {
-//   closeBalanceA = _balanceA;
-//   closeBalanceB = _balanceB;
-//   require(msg.sender == partyA or partyB);
-//   numClosed++;
-//   closer1 = msg.sender;
-//   if(numClosed == 2) {
-//       require(closer1 == partyA and closer2 == partyB);
-//       payout();
-//   }
-// }
 pragma solidity ^0.4.18;
 
 import "./ChannelRegistry.sol";
