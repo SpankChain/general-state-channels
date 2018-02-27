@@ -2,7 +2,7 @@
 
 # WIP!
 
-A POC combining insights derived from L4, Lightening, Eth, Raiden, and Spankchain research. This system abstracts the idea of a state channel by allowing two participants to agree about the value of their bond in the channel. As long as both parties can come to consensus on this top level balance, then many iterations of more complex logic may be played out that ultimately settles to this balance. As most state updates in cryptocurrency applications result in balance or ownership updates, this system could be useful. Only in cases that parties can't agree to the outcome of a complex state transition must they deploy the logic to settle the top level balance. 
+A POC combining insights derived from L4, Lightning, Eth, Raiden, and Spankchain research. This system abstracts the idea of a state channel by allowing two participants to agree about the value of their bond in the channel. As long as both parties can come to consensus on this top level balance, then many iterations of more complex logic may be played out that ultimately settles to this balance. As most state updates in cryptocurrency applications result in balance or ownership updates, this system could be useful. Only in cases that parties can't agree to the outcome of a complex state transition must they deploy the logic to settle the top level balance. 
 
 ## Table of Contents:
 
