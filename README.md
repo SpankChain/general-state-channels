@@ -32,11 +32,11 @@ TODO Outline Layer 2 solutions, L4 research, Spankchain research
 
 Bond Manager: The contract responsible for opening and closing channels. It holds the balances decided in final states of closed sub-channels.
 
-Channel Registery: TODO
+Channel Registery: The channel registery provides a deterministic address needed to counterfactually instatiate contracts. If the address of a compiled contract could be known before hand, those addresses could be placed directly into state agreements and used in other counterfactually instantiated contracts.
 
-Special Payment Channel: TODO
+Special Payment Channel: The (SPC) is a counterfactually instatiated manager contract that is able to decode and track state on other counterfactually instatiated contracts. TODO (this needs a better name)
 
-Sub-channel: TODO
+Sub-channel: An interpreter that is counterfactually instantiated and attached to the SPC in state agreements.
 
 Interpreters: These are the contracts that hold the logic responsible for assembling state bytes into meaningful representations. ie constructing the balances in a payment channel or determining the winner of a game. They are counterfactually instantiated and provide judgement on valid state transitions.
 
@@ -50,6 +50,43 @@ To open a channel the client must assemble the initial state (more specs on this
 
 Closing a channel may happen in two ways, fast with consensus or slow with byzantine faults with and a settlement period. To fast close, the state must be signed with an initial sentinel value in its sequence of bytes that represents the participants will to close to the channel. If all parties have signed a state transition with this flag then the state may be acted upon immediately by the manager and interpreter contract to settle any balances, wagers, or state outcome. If this flag is not present and the participants can't agree on the final state, the settlement game starts and accepts the highest sequence signed state. This logic holds true for the SPC and any attached sub-channels. Only the SPC and the sub-channel in question need to be deployed to the main chain in the event of dispute in any given sub-channel.
 
+#### State
+
+The off-chain state that these interpreters decode is currently comprised of 32 bytes chunks of hex encoded data to match the evm register. This can and should be optimized.
+
+```
+State
+[
+   32 isClose
+   64 sequence
+   96 numInstalledChannels
+   128 address 1
+   160 address 2
+   192 balance 1
+   224 balance 2
+   256 channel 1 state length
+   288 channel 1 interpreter type
+   320 channel 1 CTF address
+   [
+       isClose
+       sequence
+       settlement period length
+       channel specific state
+       ...
+   ]
+   channel 2 state length
+   channel 2 interpreter type
+   channel 2 CTF address
+   [
+       isClose
+       sequence
+       settlement period length
+       channel specific state
+       ...
+   ]
+   ...
+]
+```
 
 ## Bond Manager API:
 
