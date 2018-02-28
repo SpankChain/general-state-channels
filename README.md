@@ -2,27 +2,27 @@
 
 # WIP!
 
-A POC combining insights derived from [L4](https://l4.ventures/)/[Counterfactual](https://counterfactual.com/), [Lightning Network](https://lightning.network/), [Eth](https://www.ethereum.org/foundation), [Raiden](https://raiden.network/), and [Spankchain](https://spankchain.com/) research. This system abstracts the state channel by allowing two participants to agree about the value of their bond in the channel. As long as both parties can come to consensus on this top level balance, then many iterations of more complex logic may be played out that ultimately settles to this balance. As most state updates in cryptocurrency applications result in balance or ownership updates, this system could be useful. Only in cases that parties can't agree to the outcome of a state transition must they deploy the logic to settle the top level balance. 
+A POC combining insights derived from [L4](https://l4.ventures/) / [Counterfactual](https://counterfactual.com/), [Lightning Network](https://lightning.network/), [Eth](https://www.ethereum.org/foundation), [Raiden](https://raiden.network/), and [Spankchain](https://spankchain.com/) research. This system abstracts the state channel by allowing two participants to agree about the value of their bond in the channel. As long as both parties can come to consensus on this top level balance, then many iterations of more complex logic may be played out that ultimately settles to this balance. As most state updates in cryptocurrency applications result in balance or ownership updates, this system could be useful. Only in cases that parties can't agree to the outcome of a state transition must they deploy the logic to settle the top level balance. 
 
 ## Table of Contents:
 
-- [Supported Channels](supported-channels)
-  - [Single Direction Paywall Channel](single-direction-paywall-channel)
-  - [Bi-directional Payment Channel](bi-directional-payment-channel)
-  - [Crypto Kitties Battle Channel](crypto-kitties-battle-channel)
-- [Background Information](background-information)
-- [Bond Manager API](bond-manager-api)
-  - [openChannel](openchannel)
-  - [joinChannel](joinchannel)
-  - [closeChannel](closechannel)
-- [Interpreter API](interpreter-api)
-  - [checkpointState](checkpointstate)
-  - [startSettleState](startsettlestate)
-  - [challengeSettleState](challengesettlestate)
-  - [closeWithTimeout](closewithtimeout)
-- [Interpreter Interface](interpreter-interface)
-- [Roadmap](roadmap)
-- [Contributing](contributing)
+- [Supported Channels](#supported-channels)
+  - [Single Direction Paywall Channel](#single-direction-paywall-channel)
+  - [Bi-directional Payment Channel](#bi-directional-payment-channel)
+  - [Crypto Kitties Battle Channel](#crypto-kitties-battle-channel)
+- [Background Information](#background-information)
+- [Bond Manager API](#bond-manager-api)
+  - [openChannel](#openchannel)
+  - [joinChannel](#joinchannel)
+  - [closeChannel](#closechannel)
+- [Interpreter API](#interpreter-api)
+  - [checkpointState](#checkpointstate)
+  - [startSettleState](#startsettlestate)
+  - [challengeSettleState](#challengesettlestate)
+  - [closeWithTimeout](#closewithtimeout)
+- [Interpreter Interface](#interpreter-interface)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
 
 ## Supported Channels
 
