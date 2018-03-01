@@ -102,7 +102,7 @@ contract('counterfactual payment channel', function(accounts) {
 
     await bm.joinChannel(v2, r2, s2, {from: accounts[1], value: web3.toWei(20, 'ether')})
 
-    console.log('BondManager channel open')
+    console.log('BondManager channel open\n')
     console.log('PartyA counterfactually instantiating single direction payment channel...')
 
     var single = await Payment.new()
@@ -282,6 +282,9 @@ contract('counterfactual payment channel', function(accounts) {
     console.log('State_3: ' + state3+'\n')
 
 
+    console.log('counterfactually instantiating crypto kitties channel')
+
+
 
 
     console.log('Party A starting settlement of paywall channel...')
@@ -373,6 +376,7 @@ contract('counterfactual payment channel', function(accounts) {
     console.log('ctf paywall balance A: ' + ctfpaywallbala)
     let ctfpaywallbalb = await ctfpaywall.balanceB()
     console.log('ctf paywall balance B: ' + ctfpaywallbalb)
+
     // let newBm = BondManager.at(deployAddress)
     // let testBm = await newBm.test()
     // console.log('Test should be 420: ' + testBm)

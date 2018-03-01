@@ -55,7 +55,6 @@ contract InterpretPaymentChannel is InterpreterInterface {
     function closeWithTimeoutGame(bytes _state, uint _gameIndex, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
 
     }
-    // function hasAllSigs(address[] recoveredAddresses) returns (bool);
 
 
     function initState(bytes _state, uint _gameIndex, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public returns (bool) {

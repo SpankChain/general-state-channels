@@ -2,7 +2,7 @@
 
 # WIP!
 
-A POC combining insights derived from [L4](https://l4.ventures/) / [Counterfactual](https://counterfactual.com/), [Lightning Network](https://lightning.network/), [Eth](https://www.ethereum.org/foundation), [Raiden](https://raiden.network/), and [Spankchain](https://spankchain.com/) research. This system abstracts the state channel by allowing two participants to agree about the value of their bond in the channel. As long as both parties can come to consensus on this top level balance, then many iterations of more complex logic may be played out that ultimately settles to this balance. As most state updates in cryptocurrency applications result in balance or ownership updates, this system could be useful. Only in cases that parties can't agree to the outcome of a state transition must they deploy the logic to settle the top level balance. 
+A PoC combining insights derived from [L4](https://l4.ventures/) / [Counterfactual](https://counterfactual.com/), [Lightning Network](https://lightning.network/), [Eth](https://www.ethereum.org/foundation), [Raiden](https://raiden.network/), and [Spankchain](https://spankchain.com/) research. This system abstracts the state channel by allowing two participants to agree about the value of their bond in the channel. As long as both parties can come to consensus on this top level balance, then many iterations of more complex logic may be played out that ultimately settles to this balance. As most state updates in cryptocurrency applications result in balance or ownership updates, this system could be useful. Only in cases that parties can't agree to the outcome of a state transition must they deploy the logic to settle the top level balance. 
 
 ## Table of Contents:
 
@@ -66,11 +66,11 @@ These are the contracts that hold the logic responsible for assembling state byt
 
 ### Overview:
 
-This POC is comprised of one on-chain special multisig contract and a system of counterfactually instantiated interepreter contracts that may never be deployed on-chain as long as the channel participants can agree on state transitions. Multiple state channels/games may be played on the same channel bond. Closing the channel will only require reconstructing some final agreed upon state on the bond and not the intermediary final states of any other game that was not challenged and closed without consensus. This is like nesting many channels into one bonded channel.
+This PoC is comprised of one on-chain special multisig contract and a system of counterfactually instantiated interepreter contracts that may never be deployed on-chain as long as the channel participants can agree on state transitions. Multiple state channels/games may be played on the same channel bond. Closing the channel will only require reconstructing some final agreed upon state on the bond and not the intermediary final states of any other game that was not challenged and closed without consensus. This is like nesting many channels into one bonded channel.
 
 The registry contract builds a reference for agreed upon interpreter bytecode that may be deployed when necessary. Before opening a channel on the bond manager contract, both parties must compile the bytecode of the SPC interpreter and sign a state containing a message that both parties agree to use this set of rules in case of settlement. The SPC has logic to handle multiple sub-channels attached to its state. When a new channel is to be loaded off-chain, the balances are correctly updated in the state transition to seed the new channel and both parties sign this transition.
 
-To open a channel the client must assemble the initial state (more specs on state specs to come) with the participants they plan to interact with. They sign this state and pass it to the `openChannel()` function. To join the channel, the participants in the initial state must sign the state and provide this signature to the `joinChannel()` function in the manager. Once both parties in the state have joined the channel it is flagged open and any settlements or closing may begin.
+To open a channel the client must assemble the initial state (more specs on state to come) with the participants they plan to interact with. They sign this state and pass it to the `openChannel()` function. To join the channel, the participants in the initial state must sign the state and provide this signature to the `joinChannel()` function in the manager. Once both parties in the state have joined the channel it is flagged open and any settlements or closing may begin.
 
 Closing a channel may happen in two ways, fast with consensus or slow with byzantine faults with a settlement period. To fast close, the state must be signed with an initial sentinel value in its sequence of bytes that represents the participants will to close to the channel. If all parties have signed a state transition with this flag then the state may be acted upon immediately by the manager and interpreter contract to settle any balances, wagers, or state outcome. If this flag is not present and the participants can't agree on the final state, the settlement game starts and accepts the highest sequence signed state. This logic holds true for the SPC and any attached sub-channels. Only the SPC and the sub-channel in question need to be deployed to the main chain in the event of dispute in any given sub-channel.
 
@@ -178,12 +178,12 @@ signature inputs array
 
 ### startSettleState
 
-```interpreter(channelID, state, signatures)```
+```interpreter.startSettleState(channelIndex, state, signatures)```
 
 called by anyone with valid signatures on state that does not have close flag
 
 Parameters:
-- bytes32 channelID: The channel id that references the channel in the manager contract
+- bytes32 channelIndex: The channel of the subchannel in the state array. 0 = SPC settle
 - bytes state: the checkpoint state 
 signature inputs array
 - uint8[] v

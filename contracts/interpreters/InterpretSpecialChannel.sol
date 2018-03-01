@@ -7,10 +7,6 @@ import "./InterpretBidirectional.sol";
 import "./InterpretPaymentChannel.sol";
 import "./InterpretBattleChannel.sol";
 
-// this contract will essentially be the current channelManager contract
-// requirements:
-//   - start settle state: calls intreperter instantiated contract to check sigs, store state and sequence num, start challenge period
-//   - challenge settle state: calls interpreter to check sigs and higher sequence num
 contract InterpretSpecialChannel is InterpreterInterface {
     // state
     struct SubChannel {
@@ -50,7 +46,6 @@ contract InterpretSpecialChannel is InterpreterInterface {
         require(subChannels[_channelIndex].isClose == 0);
         require(subChannels[_channelIndex].isInSettlementState == 0);
 
-        // figure out decode ctf address and store
         InterpreterInterface deployedInterpreter = InterpreterInterface(registry.resolveAddress(subChannels[_channelIndex].CTFaddress));
 
         address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
@@ -67,7 +62,6 @@ contract InterpretSpecialChannel is InterpreterInterface {
         // consider running some logic on the state from the interpreter to validate 
         // the new state obeys transition rules
 
-        // figure out storage
         subChannels[_channelIndex].isInSettlementState = 1;
         subChannels[_channelIndex].settlementPeriodEnd = now + subChannels[_channelIndex].settlementPeriodLength;
     }
@@ -83,7 +77,7 @@ contract InterpretSpecialChannel is InterpreterInterface {
 
     function challengeSettleStateGame(uint _channelIndex, bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
         // require the channel to be in a settling state
-        //require(booleans[1] == 1);
+        require(subChannels[_channelIndex].isInSettlementState == 1);
         require(subChannels[_channelIndex].settlementPeriodEnd <= now);
         address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
         address _partyB = _getSig(_state, _v[1], _r[1], _s[1]);
@@ -107,14 +101,13 @@ contract InterpretSpecialChannel is InterpreterInterface {
 
     function closeWithTimeoutGame(bytes _state, uint _channelIndex, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
         InterpreterInterface deployedInterpreter = InterpreterInterface(registry.resolveAddress(subChannels[_channelIndex].CTFaddress));
-        // figure out how to decode and store this in SPC
+
         require(subChannels[_channelIndex].settlementPeriodEnd <= now);
         require(subChannels[_channelIndex].isClose == 0);
         require(subChannels[_channelIndex].isInSettlementState == 1);
 
         // Sig checking don 
         deployedInterpreter.initState(_state, _channelIndex, _v, _r, _s);
-        //require(totalBalance == bonded);
 
         address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
         address _partyB = _getSig(_state, _v[1], _r[1], _s[1]);
@@ -220,25 +213,28 @@ contract InterpretSpecialChannel is InterpreterInterface {
             // push pointer past the addresses and balances
             uint pos = 256;
             uint _channelLength;
+
             assembly {
                 _channelLength := mload(add(_state, pos))
             }
+
             _channelLength = _channelLength*32;
+
             if(_channelIndex > 1) {
                 pos+=_channelLength+32+32+32;
             }
+
             for(uint i=1; i<_channelIndex; i++) {
                 assembly {
                     _channelLength := mload(add(_state, pos))
                 }
                 pos+=_channelLength+32+32+32;
             }
+
             if(_channelIndex > 1) {
                 pos-= 32+32;
             }
-            // assembly {
-            //     _gameLength := mload(add(_state, pos))
-            // }
+
             assembly {
                 _intType := mload(add(_state, add(pos, 32)))
                 _CTFaddress := mload(add(_state, add(pos, 64)))
