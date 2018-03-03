@@ -58,11 +58,6 @@ contract InterpretBattleChannel is InterpreterInterface {
 
     address[] partyArr;
 
-
-    // function interpret(bytes _data) public returns (bool) {
-    //     return true;
-    // }
-
     function initState(bytes _data) public returns (bool) {
         _decodeState(_data);
         return true;

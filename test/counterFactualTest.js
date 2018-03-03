@@ -78,7 +78,7 @@ contract('counterfactual payment channel', function(accounts) {
     bm = await BondManager.new(CTFaddress, reg.address)
 
     // generate SPC state
-
+    // do before bond manageer deploy, reduce bm to one tx
     var initialState = generateInitSPCState(0, 0, 0, accounts[0], accounts[1], 20, 20)
     console.log('Initial State: ' + initialState + '\n')
 
@@ -292,13 +292,13 @@ contract('counterfactual payment channel', function(accounts) {
 
     // Does any of this work? Is it a good idea? 
     // Why is a Raven like a writing desk?
+
     //await reg.deployCTF(ctfcode, CTFsigs)
+    // should decode contract bytes from state
     await reg.deployCTF(ctfcode, ctfSPCstate, ctfsigV, ctfsigR, ctfsigS)
 
     let deployAddress = await reg.resolveAddress(CTFaddress)
-    let dAddress = await reg.ctfaddy()
     console.log(CTFaddress)
-    console.log('SPC deploy address: ' + dAddress)
     console.log('---')
     console.log(CTFsigs)
     console.log('---')
@@ -313,8 +313,6 @@ contract('counterfactual payment channel', function(accounts) {
     spc = await SPC.at(deployAddress);
 
     console.log('counterfactual SPC contract deployed and mapped by registry: ' + deployAddress)
-    let ctfaddy = await reg.ctfaddy()
-    console.log('contract hashed ctf address: ' + ctfaddy+'\n')
 
     //await reg.deployCTF(ctfpaymentcode, paymentCTFsigs)
     await reg.deployCTF(ctfpaymentcode, ctfpaymentstate, ctfpaysigV, ctfpaysigR, ctfpaysigS)
@@ -322,12 +320,6 @@ contract('counterfactual payment channel', function(accounts) {
     deployAddress = await reg.resolveAddress(paymentCTFaddress)
 
     console.log('counterfactual Paywall contract deployed and mapped by registry: ' + deployAddress)
-    ctfaddy = await reg.ctfaddy()
-    console.log()
-    console.log('contract hashed ctf address: ' + ctfaddy + '\n')
-    console.log(single.address)
-
-
 
     console.log('party A starting settlement of paywall channel...\n')
 
@@ -353,7 +345,7 @@ contract('counterfactual payment channel', function(accounts) {
 
     console.log('address A: '+ spcPartyA+' balance A: '+ spcBalA)
     console.log('address B: '+ spcPartyB+' balance B: '+ spcBalB)
-    console.log('sub channel struct in settlement: ' + subchan[6]+'\n')
+    console.log('sub channel struct in settlement: ' + subchan[1]+'\n')
 
     console.log('Party B challenging settlement...')
 

@@ -15,7 +15,7 @@ contract BondManager {
     uint256 bond = 0; //in state
     uint256 bonded = 0;
     bytes32 interpreter;
-    uint8[] booleans = [0,0,0]; // ['isChannelOpen', 'settlingPeriodStarted', 'judgeResolution']
+    uint8[] booleans = [0,0,0]; // ['isChannelOpen', 'settlingPeriodStarted']
     bytes state;
 
     event ChannelCreated(bytes32 channelId, address indexed initiator);
@@ -28,11 +28,12 @@ contract BondManager {
         registry = ChannelRegistry(_registry);
     }
 
+    // Consider one function with both sigs
     function openChannel(
         bytes _state,
         uint8 _v,
         bytes32 _r,
-        bytes32 _s) 
+        bytes32 _s)
         public 
         payable
     {
@@ -64,7 +65,7 @@ contract BondManager {
         booleans[0] = 1;
     }
 
-    function closeChannel(bytes _state, uint8[2] sigV, bytes32[2] sigR, bytes32[2] sigS) public {
+    function closeChannelWithTimeout(bytes _state, uint8[2] sigV, bytes32[2] sigR, bytes32[2] sigS) public {
         address _partyA = _getSig(_state, sigV[0], sigR[0], sigS[0]);
         address _partyB = _getSig(_state, sigV[1], sigR[1], sigS[1]);
 
@@ -72,16 +73,32 @@ contract BondManager {
 
         InterpreterInterface deployedInterpreter = InterpreterInterface(registry.resolveAddress(interpreter));
         //deployedInterpreter.closeWithTimeoutGame(_gameIndex, _state, sigV, sigR, sigS);
+        require(deployedInterpreter.isOpen() == 1);
 
         balanceA = deployedInterpreter.balanceA();
         balanceB = deployedInterpreter.balanceB();
 
-        _payout(_partyA, _partyB);
+        _payout();
         booleans[0] = 0;
     }
 
 
-    function _payout(address _a, address _b) internal {
+    function closeChannel(bytes _state, uint8[2] sigV, bytes32[2] sigR, bytes32[2] sigS) public {
+        bond = _decodeState(_state);
+
+        address _partyA = _getSig(_state, sigV[0], sigR[0], sigS[0]);
+        address _partyB = _getSig(_state, sigV[1], sigR[1], sigS[1]);
+
+        require(_isClose(_state));
+
+        require(_hasAllSigs(_partyA, _partyB));
+
+        booleans[0] = 0;
+        _payout();
+    }
+
+
+    function _payout() internal {
         require(balanceA + balanceB == bonded);
         partyA.transfer(balanceA);
         partyB.transfer(balanceB);

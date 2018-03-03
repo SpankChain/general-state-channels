@@ -2,8 +2,9 @@ pragma solidity ^0.4.18;
 
 contract InterpreterInterface {
     bool public interpreter = true;
-    uint256 public balanceA = 0;
-    uint256 public balanceB = 0;
+    uint256 public balanceA;
+    uint256 public balanceB;
+    uint public isOpen;
 
     /// @dev simply a boolean to indicate this is the contract we expect to be
     function isInterpreter() public view returns (bool){

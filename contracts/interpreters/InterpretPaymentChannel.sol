@@ -16,8 +16,7 @@ contract InterpretPaymentChannel is InterpreterInterface {
     // }
 
     uint256 public totalBond = 0;
-    uint256 public balanceA = 0;
-    uint256 public balanceB = 0;
+    
     // This always returns true since the receiver should only
     // sign and close the highest balance they have
     function isClose(bytes _data) public returns(bool) {

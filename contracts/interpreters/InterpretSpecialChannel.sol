@@ -12,14 +12,14 @@ contract InterpretSpecialChannel is InterpreterInterface {
     struct SubChannel {
         uint isClose;
         uint isInSettlementState;
-        uint numParties;
+        // uint numParties;
         uint sequence;
-        uint intType;
+        // uint intType; // interpreter type, not needed
         address[2] participants;
         bytes32 CTFaddress;
         uint settlementPeriodLength;
         uint settlementPeriodEnd;
-        bytes state;
+        bytes state; // not needed
     }
 
     mapping(uint => SubChannel) subChannels;
@@ -29,10 +29,11 @@ contract InterpretSpecialChannel is InterpreterInterface {
     uint256 public balanceB;
     uint256 public bonded = 0;
     bytes public state;
-    uint isOpen = 1;
+    uint public isOpen = 1;
     uint isInSettlementState = 0;
     ChannelRegistry public registry;
-
+    uint public settlementPeriodLength;
+    uint public settlementPeriodEnd;
 
     function InterpretSpecialChannel(address _registry) {
         require(_registry != 0x0);
@@ -62,6 +63,8 @@ contract InterpretSpecialChannel is InterpreterInterface {
         // consider running some logic on the state from the interpreter to validate 
         // the new state obeys transition rules
 
+        state = _state;
+
         subChannels[_channelIndex].isInSettlementState = 1;
         subChannels[_channelIndex].settlementPeriodEnd = now + subChannels[_channelIndex].settlementPeriodLength;
     }
@@ -77,6 +80,7 @@ contract InterpretSpecialChannel is InterpreterInterface {
 
     function challengeSettleStateGame(uint _channelIndex, bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
         // require the channel to be in a settling state
+        _decodeState(_state, _channelIndex);
         require(subChannels[_channelIndex].isInSettlementState == 1);
         require(subChannels[_channelIndex].settlementPeriodEnd <= now);
         address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
@@ -120,6 +124,8 @@ contract InterpretSpecialChannel is InterpreterInterface {
         subChannels[_channelIndex].isClose = 1;
     }
 
+    // TODO: Build SPC settlement functions
+
     function isSequenceHigher(bytes _data1, bytes _data2) public pure returns (bool) {
         uint isHigher1;
         uint isHigher2;
@@ -161,7 +167,7 @@ contract InterpretSpecialChannel is InterpreterInterface {
         //    192 balance 1
         //    224 balance 2
         //    256 channel 1 state length
-        //    288 channel 1 interpreter type
+        //    288 channel 1 interpreter type // remove from client state
         //    320 channel 1 CTF address
         //    [
         //        isClose
@@ -236,14 +242,14 @@ contract InterpretSpecialChannel is InterpreterInterface {
             }
 
             assembly {
-                _intType := mload(add(_state, add(pos, 32)))
+                //_intType := mload(add(_state, add(pos, 32)))
                 _CTFaddress := mload(add(_state, add(pos, 64)))
                 //_sequence := mload(add(_state, add(pos,128)))
                 _settlement := mload(add(_state, add(pos, 160)))
                 //_gameState := mload(add(_state, add(pos, _posState)))
             }
 
-            subChannels[_channelIndex].intType = _intType;
+            //subChannels[_channelIndex].intType = _intType;
             subChannels[_channelIndex].settlementPeriodLength = _settlement;
             subChannels[_channelIndex].CTFaddress = _CTFaddress;
         }
@@ -292,9 +298,9 @@ contract InterpretSpecialChannel is InterpreterInterface {
     (
         uint isClose,
         uint isInSettlementState,
-        uint numParties,
+        //uint numParties,
         uint sequence,
-        uint intType,
+        // uint intType,
         address[2] participants,
         bytes32 CTFaddress,
         uint settlementPeriodLength,
@@ -306,9 +312,9 @@ contract InterpretSpecialChannel is InterpreterInterface {
         return (
             g.isClose,
             g.isInSettlementState,
-            g.numParties,
+            //g.numParties,
             g.sequence,
-            g.intType,
+            // g.intType,
             g.participants,
             g.CTFaddress,
             g.settlementPeriodLength,

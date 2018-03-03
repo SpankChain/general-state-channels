@@ -10,14 +10,7 @@ contract InterpretBidirectional is InterpreterInterface {
     // [96-127] bond 
     // [128-159] balance of receiver
 
-    // function interpret(bytes _data) public returns (bool) {
-
-    //   return true;
-    // }
-
     uint256 totalBond = 0;
-    uint256 public balanceA = 0;
-    uint256 public balanceB = 0;
     // This always returns true since the receiver should only
     // sign and close the highest balance they have
     function isClose(bytes _data) public returns(bool) {

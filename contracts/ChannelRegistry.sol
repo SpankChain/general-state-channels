@@ -2,7 +2,6 @@ pragma solidity ^0.4.18;
 
 contract ChannelRegistry {
     mapping(bytes32 => address) registry;
-    bytes32 public ctfaddy;
 
     event ContractDeployed(address deployedAddress);
 
@@ -10,6 +9,7 @@ contract ChannelRegistry {
         return registry[_CTFaddress];
     }
 
+    // fix: remove _CTFBytes and pull the bytes from the state
     function deployCTF(bytes _CTFbytes, bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
         address deployedAddress;
         assembly {
@@ -23,12 +23,11 @@ contract ChannelRegistry {
         //bytes32 _CTFaddress = keccak256(_r[0], _s[0], _v[0], _r[1], _s[1], _v[1]);
 
         var (a, b) = _decodeState(_state);
+
         for(uint i=2; i<2; i++) {
             address _signer = _getSig(_state, _v[i], _r[i], _s[i]);
             if (_signer != a) require(_signer == b);
         }
-
-        ctfaddy = _CTFaddress;
 
         registry[_CTFaddress] = deployedAddress;
         ContractDeployed(deployedAddress);
