@@ -289,13 +289,19 @@ contract('counterfactual payment channel', function(accounts) {
 
     console.log('Party A starting settlement of paywall channel...')
     console.log('Deploying SPC and Paywall code to registry...')
+    console.log(ctfSPCstate)
 
     // Does any of this work? Is it a good idea? 
     // Why is a Raven like a writing desk?
 
     //await reg.deployCTF(ctfcode, CTFsigs)
     // should decode contract bytes from state
-    await reg.deployCTF(ctfcode, ctfSPCstate, ctfsigV, ctfsigR, ctfsigS)
+    await reg.deployCTF(ctfSPCstate, ctfsigV, ctfsigR, ctfsigS)
+    let test = await reg._code()
+    console.log('REcovered Bytecode')
+    console.log(test)
+    console.log(ctfSPCstate.length)
+    console.log('---')
 
     let deployAddress = await reg.resolveAddress(CTFaddress)
     console.log(CTFaddress)
@@ -315,7 +321,7 @@ contract('counterfactual payment channel', function(accounts) {
     console.log('counterfactual SPC contract deployed and mapped by registry: ' + deployAddress)
 
     //await reg.deployCTF(ctfpaymentcode, paymentCTFsigs)
-    await reg.deployCTF(ctfpaymentcode, ctfpaymentstate, ctfpaysigV, ctfpaysigR, ctfpaysigS)
+    await reg.deployCTF(ctfpaymentstate, ctfpaysigV, ctfpaysigR, ctfpaysigS)
 
     deployAddress = await reg.resolveAddress(paymentCTFaddress)
 
@@ -617,10 +623,14 @@ function generateInitSPCState(sentinel, seq, numChan, addyA, addyB, balA, balB) 
 function generateRegistryState(partyA, partyB, bytecode) {
     var addressA = padBytes32(partyA)
     var addressB = padBytes32(partyB)
+    var codelength = padBytes32(web3.toHex(bytecode.length))
+    console.log('CODE LENGTH!!!')
+    console.log(bytecode.length)
 
     var m = 
         addressA +
         addressB.substr(2, addressB.length) +
+        codelength.substr(2, codelength.length) +
         bytecode.substr(2, bytecode.length)
 
     return m
