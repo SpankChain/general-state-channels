@@ -27,7 +27,7 @@ contract ChannelRegistry {
             //jumpi(invalidJumpLabel, iszero(extcodesize(deployedAddress)))
         }
 
-        for(uint i=2; i<2; i++) {
+        for(uint i=0; i<2; i++) {
             address _signer = _getSig(_CTFaddress, _v[i], _r[i], _s[i]);
             if (_signer != a) require(_signer == b);
             if (_signer != b) require(_signer == a);
