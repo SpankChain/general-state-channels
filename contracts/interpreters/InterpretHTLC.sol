@@ -2,18 +2,37 @@ pragma solidity ^0.4.18;
 
 import "./InterpreterInterface.sol";
 
-contract InterpretBidirectional is InterpreterInterface {
+contract InterpretHTLC is InterpreterInterface {
     // State
     // [0-31] isClose flag
-    // [32-63] address sender
-    // [64-95] address receiver
+    // [32-63] sequence
+    // [64-95] timeout
     // [96-127] bond 
-    // [128-159] balance of receiver
+    // [128-159] balance A
+    // [160-191] balance B
+    // [192-224] lockTXroot
 
     uint256 totalBond = 0;
+    bytes32 public lockroot;
+    uint256 lockedNonce = 0;
+    bytes state;
+    // struct Lock {
+    //     uint256 amount;
+    //     bytes32 hash;
+    //     uint256 timeout;
+    // }
+
+    // Lock lockedTx;
     // This always returns true since the receiver should only
     // sign and close the highest balance they have
     function isClose(bytes _data) public returns(bool) {
+        uint isClosed;
+
+        assembly {
+            isClosed := mload(add(_data, 32))
+        }
+
+        require(isClosed == 1);
         return true;
     }
 
@@ -30,6 +49,43 @@ contract InterpretBidirectional is InterpreterInterface {
         return true;
     }
 
+
+    function updateBalances(bytes32 _root, bytes _proof, uint256 _lockedNonce, uint256 _amount, bytes32 _hash, uint256 _timeout, bytes32 _secret) public returns (bool) {
+        //require(now >= getTimeout(state));
+        require(_lockedNonce == lockedNonce);
+        
+        bytes32 _txHash = keccak256(_lockedNonce, _amount, _hash, _timeout);
+        lockroot = _root;
+        require(_isContained(_txHash, _proof));
+
+        // no need to refund?, just don't update the state balance
+        // for the receiver
+        // // refund case
+        // if (_secret == 0x0) {
+        //     require(_timeout <= now);
+        //     //refund to sender
+        //     balanceA+=_amount;
+        // }
+
+        // redeem case
+        require(keccak256(_secret) == _hash);
+        balanceB+=_amount;
+
+        lockedNonce++;
+
+        return true;
+    }
+
+    // function getLock() public view returns (uint256 amount, bytes32 hash, uint256 timeout) {
+    //     return (lockedTx.amount, lockedTx.hash, lockedTx.timeout);
+    // }
+
+    function getTimeout(bytes _state) returns(uint256 _timeout) {
+        assembly {
+            _timeout := mload(add(_state, 96))
+        }
+    }
+
     function isAddressInState(address _queryAddress) public returns (bool) {
         return true;
     }
@@ -37,7 +93,6 @@ contract InterpretBidirectional is InterpreterInterface {
 
     // just look for receiver sig
     function quickClose(bytes _data, uint _gameIndex) public returns (bool) {
-        _decodeState(_data, _gameIndex);
         require(balanceA + balanceB == totalBond);
         return true;
     }
@@ -50,11 +105,32 @@ contract InterpretBidirectional is InterpreterInterface {
 
     }
 
-
+    // this needs to be permissioned to allow only calls from participants or only 
+    // callable from the ctf contract pointing to it
     function initState(bytes _state, uint _gameIndex, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public returns (bool) {
         _decodeState(_state, _gameIndex);
+        state = _state;
     }
 
+    function _isContained(bytes32 _hash, bytes _proof) returns (bool) {
+        bytes32 cursor = _hash;
+        bytes32 proofElem;
+
+        for (uint256 i=64; i<=_proof.length; i+=32) {
+            assembly { proofElem := mload(add(_proof, i)) }
+
+            if (cursor < proofElem) {
+                cursor = keccak256(cursor, proofElem);
+            } else {
+                cursor = keccak256(proofElem, cursor);
+            }
+        }
+
+        return cursor == lockroot;
+    }
+
+    // this needs to be permissioned to allow only calls from participants or only 
+    // callable from the ctf contract pointing to it
     function _decodeState(bytes _state, uint _gameIndex) {
         // SPC State
         // [
@@ -91,6 +167,7 @@ contract InterpretBidirectional is InterpreterInterface {
         uint256 _bond;
         uint256 _balanceA;
         uint256 _balanceB;
+        bytes32 _lockroot;
 
         // game index 0 means this is an initial state where there have
         // been no games loaded, so this state can't be assembled
@@ -126,6 +203,7 @@ contract InterpretBidirectional is InterpreterInterface {
             }
             balanceA = _balanceA;
             balanceB = _balanceB;
+            lockroot = _lockroot;
         }
     }
 }

@@ -20,7 +20,7 @@ contract InterpreterInterface {
 
     function isAddressInState(address _queryAddress) public returns (bool);
 
-    function closeWithTimeoutGame(bytes _state, uint _gameIndex, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public;
+    function closeWithTimeoutGame(uint _gameIndex, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public;
 
     function initState(bytes _state, uint _gameIndex, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public returns (bool);
 

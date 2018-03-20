@@ -59,6 +59,7 @@ contract InterpretSpecialChannel is InterpreterInterface {
         // the initial state needs to be settled?
 
         require(deployedInterpreter.isSequenceHigher(_state, state));
+        deployedInterpreter.initState(_state, _channelIndex, _v, _r, _s);
 
         // consider running some logic on the state from the interpreter to validate 
         // the new state obeys transition rules
@@ -92,6 +93,7 @@ contract InterpretSpecialChannel is InterpreterInterface {
         // figure out how decode the CTFaddress from the state
         InterpreterInterface deployedInterpreter = InterpreterInterface(registry.resolveAddress(subChannels[_channelIndex].CTFaddress));
         require(deployedInterpreter.isSequenceHigher(_state, state));
+        deployedInterpreter.initState(_state, _channelIndex, _v, _r, _s);
 
         // consider running some logic on the state from the interpreter to validate 
         // the new state obeys transition rules. The only invalid transition is trying to 
@@ -103,7 +105,7 @@ contract InterpretSpecialChannel is InterpreterInterface {
         state = _state;
     }
 
-    function closeWithTimeoutGame(bytes _state, uint _channelIndex, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
+    function closeWithTimeoutGame(uint _channelIndex, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
         InterpreterInterface deployedInterpreter = InterpreterInterface(registry.resolveAddress(subChannels[_channelIndex].CTFaddress));
 
         require(subChannels[_channelIndex].settlementPeriodEnd <= now);
@@ -111,12 +113,12 @@ contract InterpretSpecialChannel is InterpreterInterface {
         require(subChannels[_channelIndex].isInSettlementState == 1);
 
         // Sig checking don 
-        deployedInterpreter.initState(_state, _channelIndex, _v, _r, _s);
+        deployedInterpreter.initState(state, _channelIndex, _v, _r, _s);
 
-        address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
-        address _partyB = _getSig(_state, _v[1], _r[1], _s[1]);
+        //address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
+        //address _partyB = _getSig(_state, _v[1], _r[1], _s[1]);
 
-        require(_hasAllSigs(_partyA, _partyB));
+        //require(_hasAllSigs(_partyA, _partyB));
 
         // update the spc state for balance
         balanceA += deployedInterpreter.balanceA();

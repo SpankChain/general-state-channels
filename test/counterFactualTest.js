@@ -9,14 +9,19 @@ const Registry = artifacts.require("./ChannelRegistry.sol")
 const SPC = artifacts.require("./InterpretSpecialChannel.sol")
 const Payment = artifacts.require("./InterpretPaymentChannel.sol")
 const TwoPartyPayment = artifacts.require("./InterpretBidirectional.sol")
+const HTLC = artifacts.require("./InterpretHTLC.sol")
+
+const crypto = require('crypto')
 
 let bm
 let reg
 let spc
 let pay
 let twopay
+let htlc
 
 let event_args
+let roothash
 
 contract('counterfactual payment channel', function(accounts) {
   it("Payment Channel", async function() {
@@ -287,106 +292,225 @@ contract('counterfactual payment channel', function(accounts) {
 
 
 
-    console.log('Party A starting settlement of paywall channel...')
-    console.log('Deploying SPC and Paywall code to registry...')
-    console.log(ctfSPCstate)
+    // console.log('Party A starting settlement of paywall channel...')
+    // console.log('Deploying SPC and Paywall code to registry...')
+    // console.log(ctfSPCstate)
 
-    // Does any of this work? Is it a good idea? 
-    // Why is a Raven like a writing desk?
+    // // Does any of this work? Is it a good idea? 
+    // // Why is a Raven like a writing desk?
 
-    //await reg.deployCTF(ctfcode, CTFsigs)
-    // should decode contract bytes from state
-    await reg.deployCTF(ctfSPCstate, ctfsigV, ctfsigR, ctfsigS)
-    let test = await reg._code()
-    console.log('REcovered Bytecode')
-    console.log(test)
-    console.log(ctfSPCstate.length)
-    console.log('---')
+    // //await reg.deployCTF(ctfcode, CTFsigs)
+    // // should decode contract bytes from state
+    // await reg.deployCTF(ctfSPCstate, ctfsigV, ctfsigR, ctfsigS)
+    // let test = await reg._code()
+    // console.log('REcovered Bytecode')
+    // console.log(test)
+    // console.log(ctfSPCstate.length)
+    // console.log('---')
 
-    let deployAddress = await reg.resolveAddress(CTFaddress)
-    console.log(CTFaddress)
-    console.log('---')
-    console.log(CTFsigs)
-    console.log('---')
-    console.log(ctfsigR[0]+ctfsigS[0]+ctfsigV[0])
-    console.log('----')
-    console.log(ctfr1+ctfs1.substr(2, ctfs1.length)+ctfv1)
-    console.log(CTFsig1)
+    // let deployAddress = await reg.resolveAddress(CTFaddress)
+    // console.log(CTFaddress)
+    // console.log('---')
+    // console.log(CTFsigs)
+    // console.log('---')
+    // console.log(ctfsigR[0]+ctfsigS[0]+ctfsigV[0])
+    // console.log('----')
+    // console.log(ctfr1+ctfs1.substr(2, ctfs1.length)+ctfv1)
+    // console.log(CTFsig1)
+    // console.log('-----')
+    // console.log(ctfr2+ctfs2+ctfv2)
+    // console.log(CTFsig2)
+    // // reregister the spc instance to the one the registry deployed
+    // spc = await SPC.at(deployAddress);
+
+    // console.log('counterfactual SPC contract deployed and mapped by registry: ' + deployAddress)
+
+    // //await reg.deployCTF(ctfpaymentcode, paymentCTFsigs)
+    // await reg.deployCTF(ctfpaymentstate, ctfpaysigV, ctfpaysigR, ctfpaysigS)
+
+    // deployAddress = await reg.resolveAddress(paymentCTFaddress)
+
+    // console.log('counterfactual Paywall contract deployed and mapped by registry: ' + deployAddress)
+
+    // console.log('party A starting settlement of paywall channel...\n')
+
+    // var sigV = []
+    // var sigR = []
+    // var sigS = []
+
+    // sigV.push(v)
+    // sigV.push(v2)
+    // sigR.push(r)
+    // sigR.push(r2)
+    // sigS.push(s)
+    // sigS.push(s2)
+
+    // await spc.startSettleStateGame(1, state2, sigV, sigR, sigS)
+
+    // let spcPartyA = await spc.partyA()
+    // let spcBalA = await spc.balanceA()
+    // let spcPartyB = await spc.partyB()
+    // let spcBalB = await spc.balanceB()
+
+    // let subchan = await spc.getSubChannel(1)
+
+    // console.log('address A: '+ spcPartyA+' balance A: '+ spcBalA)
+    // console.log('address B: '+ spcPartyB+' balance B: '+ spcBalB)
+    // console.log('sub channel struct in settlement: ' + subchan[1]+'\n')
+
+    // console.log('Party B challenging settlement...')
+
+
+
+    // console.log('party A closing sub channel with timeout...')
+    // //await spc.closeWithTimeoutGame(state2, 1, sigV, sigR, sigS)
+    // await spc.closeWithTimeoutGame(1, sigV, sigR, sigS)
+
+    // console.log('sub channel closed')
+    // spcPartyA = await spc.partyA()
+    // spcBalA = await spc.balanceA()
+    // spcPartyB = await spc.partyB()
+    // spcBalB = await spc.balanceB()
+    // console.log('address A: '+ spcPartyA+' balance A: '+ spcBalA)
+    // console.log('address B: '+ spcPartyB+' balance B: '+ spcBalB)
+
+    // let ctfpaywall = await Payment.at(deployAddress)
+
+    // let ctfpaywallbala = await ctfpaywall.balanceA()
+    // console.log('ctf paywall balance A: ' + ctfpaywallbala)
+    // let ctfpaywallbalb = await ctfpaywall.balanceB()
+    // console.log('ctf paywall balance B: ' + ctfpaywallbalb)
+
+    // // let newBm = BondManager.at(deployAddress)
+    // // let testBm = await newBm.test()
+    // // console.log('Test should be 420: ' + testBm)
+
+    // // console.log('begin settling byzantine bond manager state...')
+
+    // // await bm.startSettleState(0, sigV, sigR, sigS, state2)
+
+    // // bm.closeChannel()
+
+    htlc = await HTLC.new()
+
+    var locktxs = []
+    var tx1 = generateHTLCtx(0, 3, web3.sha3('secret1'), 1521436136)
+    var tx2 = generateHTLCtx(1, 6, web3.sha3('secret2'), 1521436137)
+    var tx3 = generateHTLCtx(2, 2, web3.sha3('secret3'), 1521436138)
+    var tx4 = generateHTLCtx(3, 9, web3.sha3('secret4'), 1521436139)
+
+    locktxs.push(tx1)
+    locktxs.push(tx2)
+    locktxs.push(tx3)
+    locktxs.push(tx4)
+    console.log(locktxs)
+
+    var htx1 = web3.sha3(tx1, {encoding: 'hex'})
+    // var thash = crypto.createHash('sha256')
+    // thash.update(tx1)
+
+    //console.log(web3.sha3(padBytes32(web3.toHex(0)), padBytes32(web3.toHex(3)), padBytes32(web3.toHex(1521436136))))
+
+    console.log('generating proof for locked tx number 2, index 1')
+    let proof = generateMerkleProof(locktxs, 0)
     console.log('-----')
-    console.log(ctfr2+ctfs2+ctfv2)
-    console.log(CTFsig2)
-    // reregister the spc instance to the one the registry deployed
-    spc = await SPC.at(deployAddress);
-
-    console.log('counterfactual SPC contract deployed and mapped by registry: ' + deployAddress)
-
-    //await reg.deployCTF(ctfpaymentcode, paymentCTFsigs)
-    await reg.deployCTF(ctfpaymentstate, ctfpaysigV, ctfpaysigR, ctfpaysigS)
-
-    deployAddress = await reg.resolveAddress(paymentCTFaddress)
-
-    console.log('counterfactual Paywall contract deployed and mapped by registry: ' + deployAddress)
-
-    console.log('party A starting settlement of paywall channel...\n')
-
-    var sigV = []
-    var sigR = []
-    var sigS = []
-
-    sigV.push(v)
-    sigV.push(v2)
-    sigR.push(r)
-    sigR.push(r2)
-    sigS.push(s)
-    sigS.push(s2)
-
-    await spc.startSettleStateGame(1, state2, sigV, sigR, sigS)
-
-    let spcPartyA = await spc.partyA()
-    let spcBalA = await spc.balanceA()
-    let spcPartyB = await spc.partyB()
-    let spcBalB = await spc.balanceB()
-
-    let subchan = await spc.getSubChannel(1)
-
-    console.log('address A: '+ spcPartyA+' balance A: '+ spcBalA)
-    console.log('address B: '+ spcPartyB+' balance B: '+ spcBalB)
-    console.log('sub channel struct in settlement: ' + subchan[1]+'\n')
-
-    console.log('Party B challenging settlement...')
-
-
-
-    console.log('party A closing sub channel with timeout...')
-    await spc.closeWithTimeoutGame(state2, 1, sigV, sigR, sigS)
-
-    console.log('sub channel closed')
-    spcPartyA = await spc.partyA()
-    spcBalA = await spc.balanceA()
-    spcPartyB = await spc.partyB()
-    spcBalB = await spc.balanceB()
-    console.log('address A: '+ spcPartyA+' balance A: '+ spcBalA)
-    console.log('address B: '+ spcPartyB+' balance B: '+ spcBalB)
-
-    let ctfpaywall = await Payment.at(deployAddress)
-
-    let ctfpaywallbala = await ctfpaywall.balanceA()
-    console.log('ctf paywall balance A: ' + ctfpaywallbala)
-    let ctfpaywallbalb = await ctfpaywall.balanceB()
-    console.log('ctf paywall balance B: ' + ctfpaywallbalb)
-
-    // let newBm = BondManager.at(deployAddress)
-    // let testBm = await newBm.test()
-    // console.log('Test should be 420: ' + testBm)
-
-    // console.log('begin settling byzantine bond manager state...')
-
-    // await bm.startSettleState(0, sigV, sigR, sigS, state2)
-
-    // bm.closeChannel()
+    console.log(proof)
+    await htlc.updateBalances(roothash, proof, 0, 3, web3.sha3('secret1'), 1521436136, 'secret1')
+    let hroot = await htlc.lockroot()
+    console.log('client roothash: '+roothash)
+    console.log('solidity roothash: '+hroot)
   })
 
 })
+
+function generateHTLCtx(nonce, amount, hash, timeout) {
+  var _nonce = padBytes32(web3.toHex(nonce))
+  var _amount = padBytes32(web3.toHex(amount))
+  var _hash = hash
+  var _timeout = padBytes32(web3.toHex(timeout))
+
+  var m =
+    _nonce+
+    _amount.substr(2, _amount.length)+
+    _hash.substr(2, _hash.length)+
+    _timeout.substr(2, _timeout.length)
+
+  return m
+}
+
+function generateMerkleProof(txs, nonce) {
+  var tempHashs = []
+  var txhash
+  for(var i=0; i<txs.length;i++){
+    var temphash = web3.sha3(txs[i], {encoding: 'hex'})
+    tempHashs.push(temphash)
+    if(i===nonce) { txhash = temphash}
+  }
+  
+  let proof = txhash
+
+  return recursiveCalls(tempHashs, nonce, proof, txhash)
+}
+
+function recursiveCalls(tempHashes, index, proof, target) {
+  if(tempHashes.length === 1) {
+    roothash = tempHashes[0]
+    //proof+=tempHashes[0].substr(2, tempHashes[0])
+    return proof
+  }
+
+  console.log('sorting tx hashes')
+  tempHashes.sort()
+
+  for(i=0; i<tempHashes.length; i++){
+    if(tempHashes[i] === target) { index = i }
+  }
+
+
+  console.log(tempHashes)
+  console.log(index)
+
+  var newHashs = []
+  let targethash
+  for(var i=0; i<tempHashes.length; i++){
+    if(i%2 === 0) { 
+      let t = tempHashes[i]+tempHashes[i+1].substr(2,tempHashes[i+1].length)
+      if(i === index || i+1 === index) {
+        targethash = web3.sha3(t, {encoding: 'hex'})
+        console.log('targethash: '+targethash)
+      }
+      newHashs.push(web3.sha3(t, {encoding: 'hex'})) 
+    }
+  }
+
+  console.log(newHashs)
+
+  var newIndex
+
+  if((index)%2 === 0) {
+    console.log('even number')
+    console.log(tempHashes[index+1].substr(2, tempHashes[index+1]))
+    proof+= tempHashes[index+1].substr(2, tempHashes[index+1])
+    newIndex = index/2
+  } else {
+    console.log('odd number')
+    console.log(tempHashes[index-1].substr(2, tempHashes[index-1]))
+    proof+= tempHashes[index-1].substr(2, tempHashes[index-1])
+    newIndex = (index-1)/2
+  }
+
+  for(i=0; i<newHashs.length; i++){
+    if(newHashs[i] === targethash) {
+      console.log('new hash num: '+i)
+      index = i
+    }
+  }
+
+  tempHashes = newHashs
+  console.log(newIndex)
+  console.log(proof)
+  return recursiveCalls(newHashs, newIndex, proof, targethash)
+}
 
 function generateBidirectionalSPCState(
   _sentinel, 
