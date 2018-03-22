@@ -93,7 +93,9 @@ contract InterpretSpecialChannel is InterpreterInterface {
         // figure out how decode the CTFaddress from the state
         InterpreterInterface deployedInterpreter = InterpreterInterface(registry.resolveAddress(subChannels[_channelIndex].CTFaddress));
         require(deployedInterpreter.isSequenceHigher(_state, state));
-        deployedInterpreter.initState(_state, _channelIndex, _v, _r, _s);
+
+        // only load state if timeout has ended
+        //deployedInterpreter.initState(_state, _channelIndex, _v, _r, _s);
 
         // consider running some logic on the state from the interpreter to validate 
         // the new state obeys transition rules. The only invalid transition is trying to 
@@ -112,7 +114,7 @@ contract InterpretSpecialChannel is InterpreterInterface {
         require(subChannels[_channelIndex].isClose == 0);
         require(subChannels[_channelIndex].isInSettlementState == 1);
 
-        // Sig checking don 
+        // Sig checking not needed
         deployedInterpreter.initState(state, _channelIndex, _v, _r, _s);
 
         //address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
@@ -191,7 +193,7 @@ contract InterpretSpecialChannel is InterpreterInterface {
         //    ...
         // ]
         // num sub channels may not be needed since the channel index is provided
-        uint _numSubChannels;
+        // uint _numSubChannels;
         address _addressA;
         address _addressB;
         uint256 _balanceA;
@@ -199,12 +201,12 @@ contract InterpretSpecialChannel is InterpreterInterface {
 
         //uint _sequence;
         uint _settlement;
-        uint _intType;
+        //uint _intType;
         bytes32 _CTFaddress;
         //bytes memory _gameState;
 
         assembly {
-            _numSubChannels := mload(add(_state, 96))
+            //_numSubChannels := mload(add(_state, 96))
             _addressA := mload(add(_state, 128))
             _addressB := mload(add(_state, 160))
             _balanceA := mload(add(_state, 192))

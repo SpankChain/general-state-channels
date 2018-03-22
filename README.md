@@ -2,7 +2,7 @@
 
 # WIP!
 
-A PoC combining insights derived from [L4](https://l4.ventures/) / [Counterfactual](https://counterfactual.com/), [Lightning Network](https://lightning.network/), [Eth](https://www.ethereum.org/foundation), [Raiden](https://raiden.network/), and [Spankchain](https://spankchain.com/) research. This system abstracts the state channel by allowing two participants to agree about the value of their bond in the channel. As long as both parties can come to consensus on this top level balance, then many iterations of more complex logic may be played out that ultimately settles to this balance. As most state updates in cryptocurrency applications result in balance or ownership updates, this system could be useful. Only in cases that parties can't agree to the outcome of a state transition must they deploy the logic to settle the top level balance. 
+A PoC combining insights derived from [L4](https://l4.ventures/) / [Counterfactual](https://counterfactual.com/), [Lightning Network](https://lightning.network/), [Eth](https://www.ethereum.org/foundation), [Raiden](https://raiden.network/), and [Spankchain](https://spankchain.com/) research. This system abstracts the state channel by allowing two participants to agree about the value of their bond in the channel. As long as both parties can come to consensus on this top level balance, then many iterations of more complex logic may be played out that ultimately settles to this balance. As most state updates in cryptocurrency applications result in balance or ownership updates, this system could be useful. Only in cases that parties can't agree to the outcome of a state transition must they deploy the logic to settle the top level balance. (It may not be necessary that all state must resolve to a balance update, however the current implementation only supports balance updates.)
 
 ## Table of Contents:
 
@@ -240,9 +240,14 @@ All interpreter contracts must implement the following interface. Interpreters a
 
 ## Future Work / Roadmap
 
-TODO
+- Settlement Period Work
+  - Fee for delaying system. (challenge economics)
+  - Reducing capital lockup
+- Optimize signature verification
+- M of N-Party Sub-channels 
+- P2P Messaging Layer Standards
+- Application integration for multiple channel state (browsers/wallets)
 
 ## Contribution
 
 TODO
-

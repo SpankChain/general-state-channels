@@ -50,13 +50,14 @@ contract InterpretHTLC is InterpreterInterface {
     }
 
 
-    function updateBalances(bytes32 _root, bytes _proof, uint256 _lockedNonce, uint256 _amount, bytes32 _hash, uint256 _timeout, bytes32 _secret) public returns (bool) {
+    function updateBalances(bytes32 _root, bytes _proof, uint256 _lockedNonce, uint256 _amount, bytes32 _hash, uint256 _timeout, bytes _secret) public returns (bool) {
         //require(now >= getTimeout(state));
         require(_lockedNonce == lockedNonce);
         
         bytes32 _txHash = keccak256(_lockedNonce, _amount, _hash, _timeout);
         lockroot = _root;
         require(_isContained(_txHash, _proof));
+        //_isContained(_txHash, _proof);
 
         // no need to refund?, just don't update the state balance
         // for the receiver
@@ -70,6 +71,7 @@ contract InterpretHTLC is InterpreterInterface {
         // redeem case
         require(keccak256(_secret) == _hash);
         balanceB+=_amount;
+        balanceA-=_amount;
 
         lockedNonce++;
 

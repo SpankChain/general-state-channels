@@ -287,7 +287,7 @@ contract('counterfactual payment channel', function(accounts) {
     console.log('State_3: ' + state3+'\n')
 
 
-    console.log('counterfactually instantiating crypto kitties channel')
+    //console.log('counterfactually instantiating crypto kitties channel')
 
 
 
@@ -391,8 +391,26 @@ contract('counterfactual payment channel', function(accounts) {
 
     // // bm.closeChannel()
 
-    htlc = await HTLC.new()
+    console.log('loading state with new channel HTLC payment channel...')
+    let htlc = await HTLC.new()
+    let ctfhtlccode = htlc.constructor.bytecode
 
+    let htlcCTFhmsg = web3.sha3(ctfhtlccode, {encoding: 'hex'})
+    console.log('HTLC payment channel CTF hashed msg: ' + htlcCTFhmsg + '\n')
+
+    var htlcCTFsig1 = await web3.eth.sign(accounts[0], htlcCTFhmsg + '\n')
+    console.log('partys signing HTLC CTF channel...')
+    var htlcCTFsig2 = await web3.eth.sign(accounts[1], htlcCTFhmsg + '\n')
+
+    var htlcCTFsigs = htlcCTFsig1+htlcCTFsig2.substr(2, htlcCTFsig2.length)
+    var htlcCTFaddress = web3.sha3(htlcCTFsigs, {encoding: 'hex'})
+    console.log('htlc counterfactual address: ' + htlcCTFaddress + '\n')
+
+    console.log('generating HTLC state with transaction root...')
+
+
+
+    console.log('generating HTLC transactions...')
     var locktxs = []
     var tx1 = generateHTLCtx(0, 3, web3.sha3('secret1'), 1521436136)
     var tx2 = generateHTLCtx(1, 6, web3.sha3('secret2'), 1521436137)
@@ -403,7 +421,9 @@ contract('counterfactual payment channel', function(accounts) {
     locktxs.push(tx2)
     locktxs.push(tx3)
     locktxs.push(tx4)
+    console.log('hashlocked transaction list')
     console.log(locktxs)
+    console.log('\n')
 
     var htx1 = web3.sha3(tx1, {encoding: 'hex'})
     // var thash = crypto.createHash('sha256')
@@ -411,10 +431,16 @@ contract('counterfactual payment channel', function(accounts) {
 
     //console.log(web3.sha3(padBytes32(web3.toHex(0)), padBytes32(web3.toHex(3)), padBytes32(web3.toHex(1521436136))))
 
-    console.log('generating proof for locked tx number 2, index 1')
+    console.log('generating proof for locked tx number 1, index 0')
     let proof = generateMerkleProof(locktxs, 0)
-    console.log('-----')
-    console.log(proof)
+    console.log('proof: ')
+    console.log(proof+'\n')
+    console.log('generating HTLC SPC state with agreed tx roothash')
+    let HTLCstate = generateHTLCSPCstate(0, 4, 3,)
+
+    console.log('begin settling HTLC channel byzantine state')
+    console.log('deploying HTLC and SPC counterfactual contracts...')
+
     await htlc.updateBalances(roothash, proof, 0, 3, web3.sha3('secret1'), 1521436136, 'secret1')
     let hroot = await htlc.lockroot()
     console.log('client roothash: '+roothash)
@@ -510,6 +536,29 @@ function recursiveCalls(tempHashes, index, proof, target) {
   console.log(newIndex)
   console.log(proof)
   return recursiveCalls(newHashs, newIndex, proof, targethash)
+}
+
+function generateHTLCSPCstate(
+  _sentinel, 
+  _seq, 
+  _numChan, 
+  _addyA, 
+  _addyB, 
+  _balA, 
+  _balB, 
+  _stateLength, 
+  _intType, 
+  _CTFAddress,
+  _CTFsentinel,
+  _CTFsequence,
+  _CTFsettlementPeriod,
+  _CTFsender,
+  _CTFreceiver,
+  _CTFbond,
+  _CTFbalanceReceiver,
+  _CTFHTLCroot
+) {
+
 }
 
 function generateBidirectionalSPCState(
