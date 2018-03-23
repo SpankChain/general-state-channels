@@ -7,14 +7,17 @@ contract InterpretHTLC is InterpreterInterface {
     // [0-31] isClose flag
     // [32-63] sequence
     // [64-95] timeout
-    // [96-127] bond 
-    // [128-159] balance A
-    // [160-191] balance B
-    // [192-224] lockTXroot
+    // [96-127] sender
+    // [128-159] receiver
+    // [160-191] bond 
+    // [192-223] balance A
+    // [224-255] balance B
+    // [256-287] lockTXroot
 
     uint256 totalBond = 0;
     bytes32 public lockroot;
     uint256 lockedNonce = 0;
+    uint256 sequence = 0;
     bytes state;
     // struct Lock {
     //     uint256 amount;
@@ -51,7 +54,7 @@ contract InterpretHTLC is InterpreterInterface {
 
 
     function updateBalances(bytes32 _root, bytes _proof, uint256 _lockedNonce, uint256 _amount, bytes32 _hash, uint256 _timeout, bytes _secret) public returns (bool) {
-        //require(now >= getTimeout(state));
+        require(now >= getTimeout(state));
         require(_lockedNonce == lockedNonce);
         
         bytes32 _txHash = keccak256(_lockedNonce, _amount, _hash, _timeout);
@@ -167,7 +170,6 @@ contract InterpretHTLC is InterpreterInterface {
         // ]
 
         uint256 _bond;
-        uint256 _balanceA;
         uint256 _balanceB;
         bytes32 _lockroot;
 
@@ -200,10 +202,10 @@ contract InterpretHTLC is InterpreterInterface {
             }
             assembly {
                 _bond := mload(add(_state, add(pos, 256)))
-                _balanceA := mload(add(_state, add(pos, 288)))
-                _balanceB := mload(add(_state, add(pos, 320)))
+                _balanceB := mload(add(_state, add(pos, 288)))
+                _lockroot := mload(add(_state, add(pos, 320)))
             }
-            balanceA = _balanceA;
+            balanceA = _bond;
             balanceB = _balanceB;
             lockroot = _lockroot;
         }

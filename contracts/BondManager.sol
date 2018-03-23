@@ -65,6 +65,8 @@ contract BondManager {
         booleans[0] = 1;
     }
 
+    // needs to have settlement process to close the final balance
+    // this allows the spc to checkpoint state
     function closeChannelWithTimeout(bytes _state, uint8[2] sigV, bytes32[2] sigR, bytes32[2] sigS) public {
         address _partyA = _getSig(_state, sigV[0], sigR[0], sigS[0]);
         address _partyB = _getSig(_state, sigV[1], sigR[1], sigS[1]);

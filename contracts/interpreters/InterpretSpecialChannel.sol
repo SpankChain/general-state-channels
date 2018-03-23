@@ -58,8 +58,8 @@ contract InterpretSpecialChannel is InterpreterInterface {
         // this also may not be necessary, just check sequence on challenges. what if 
         // the initial state needs to be settled?
 
-        require(deployedInterpreter.isSequenceHigher(_state, state));
-        deployedInterpreter.initState(_state, _channelIndex, _v, _r, _s);
+        //require(deployedInterpreter.isSequenceHigher(_state, state));
+        //deployedInterpreter.initState(_state, _channelIndex, _v, _r, _s);
 
         // consider running some logic on the state from the interpreter to validate 
         // the new state obeys transition rules

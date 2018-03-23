@@ -22,6 +22,8 @@ let htlc
 
 let event_args
 let roothash
+let gasUsed
+let receipt
 
 contract('counterfactual payment channel', function(accounts) {
   it("Payment Channel", async function() {
@@ -103,9 +105,13 @@ contract('counterfactual payment channel', function(accounts) {
     var s2 = "0x" + sig2.substr(66,64)
     var v2 = parseInt(sig2.substr(130, 2)) + 27
 
-    await bm.openChannel(initialState, v, r, s, {from: accounts[0], value: web3.toWei(20, 'ether')})
+    receipt = await bm.openChannel(initialState, v, r, s, {from: accounts[0], value: web3.toWei(20, 'ether')})
+    gasUsed = receipt.receipt.gasUsed
+    console.log('Gas Used: ' + gasUsed)
 
-    await bm.joinChannel(v2, r2, s2, {from: accounts[1], value: web3.toWei(20, 'ether')})
+    receipt = await bm.joinChannel(v2, r2, s2, {from: accounts[1], value: web3.toWei(20, 'ether')})
+    gasUsed = receipt.receipt.gasUsed
+    console.log('Gas Used: ' + gasUsed)
 
     console.log('BondManager channel open\n')
     console.log('PartyA counterfactually instantiating single direction payment channel...')
@@ -296,30 +302,18 @@ contract('counterfactual payment channel', function(accounts) {
     // console.log('Deploying SPC and Paywall code to registry...')
     // console.log(ctfSPCstate)
 
-    // // Does any of this work? Is it a good idea? 
-    // // Why is a Raven like a writing desk?
+    // Does any of this work? Is it a good idea? 
+    // Why is a Raven like a writing desk?
 
-    // //await reg.deployCTF(ctfcode, CTFsigs)
-    // // should decode contract bytes from state
+    //await reg.deployCTF(ctfcode, CTFsigs)
+    // should decode contract bytes from state
     // await reg.deployCTF(ctfSPCstate, ctfsigV, ctfsigR, ctfsigS)
-    // let test = await reg._code()
-    // console.log('REcovered Bytecode')
-    // console.log(test)
+
     // console.log(ctfSPCstate.length)
     // console.log('---')
 
     // let deployAddress = await reg.resolveAddress(CTFaddress)
-    // console.log(CTFaddress)
-    // console.log('---')
-    // console.log(CTFsigs)
-    // console.log('---')
-    // console.log(ctfsigR[0]+ctfsigS[0]+ctfsigV[0])
-    // console.log('----')
-    // console.log(ctfr1+ctfs1.substr(2, ctfs1.length)+ctfv1)
-    // console.log(CTFsig1)
-    // console.log('-----')
-    // console.log(ctfr2+ctfs2+ctfv2)
-    // console.log(CTFsig2)
+
     // // reregister the spc instance to the one the registry deployed
     // spc = await SPC.at(deployAddress);
 
@@ -360,7 +354,7 @@ contract('counterfactual payment channel', function(accounts) {
 
     // console.log('Party B challenging settlement...')
 
-
+    // // TODO
 
     // console.log('party A closing sub channel with timeout...')
     // //await spc.closeWithTimeoutGame(state2, 1, sigV, sigR, sigS)
@@ -381,41 +375,60 @@ contract('counterfactual payment channel', function(accounts) {
     // let ctfpaywallbalb = await ctfpaywall.balanceB()
     // console.log('ctf paywall balance B: ' + ctfpaywallbalb)
 
-    // // let newBm = BondManager.at(deployAddress)
-    // // let testBm = await newBm.test()
-    // // console.log('Test should be 420: ' + testBm)
+    // let newBm = BondManager.at(deployAddress)
+    // let testBm = await newBm.test()
+    // console.log('Test should be 420: ' + testBm)
 
-    // // console.log('begin settling byzantine bond manager state...')
+    // console.log('begin settling byzantine bond manager state...')
 
-    // // await bm.startSettleState(0, sigV, sigR, sigS, state2)
+    // await bm.startSettleState(0, sigV, sigR, sigS, state2)
 
-    // // bm.closeChannel()
+    // bm.closeChannel()
 
     console.log('loading state with new channel HTLC payment channel...')
     let htlc = await HTLC.new()
     let ctfhtlccode = htlc.constructor.bytecode
+    var ctfhtlcstate = generateRegistryState(accounts[0], accounts[1], ctfhtlccode)
 
-    let htlcCTFhmsg = web3.sha3(ctfhtlccode, {encoding: 'hex'})
+    let htlcCTFhmsg = web3.sha3(ctfhtlcstate, {encoding: 'hex'})
     console.log('HTLC payment channel CTF hashed msg: ' + htlcCTFhmsg + '\n')
 
     var htlcCTFsig1 = await web3.eth.sign(accounts[0], htlcCTFhmsg + '\n')
     console.log('partys signing HTLC CTF channel...')
     var htlcCTFsig2 = await web3.eth.sign(accounts[1], htlcCTFhmsg + '\n')
 
+    var htlcctfr1 = htlcCTFsig1.substr(0,66)
+    var htlcctfs1 = "0x" + htlcCTFsig1.substr(66,64)
+    var htlcctfv1 = parseInt(htlcCTFsig1.substr(130, 2)) + 27
+
+    var htlcctfr2 = htlcCTFsig2.substr(0,66)
+    var htlcctfs2 = "0x" + htlcCTFsig2.substr(66,64)
+    var htlcctfv2 = parseInt(htlcCTFsig2.substr(130, 2)) + 27
+
+    var ctfhtlcsigV = []
+    var ctfhtlcsigR = []
+    var ctfhtlcsigS = []
+
+    ctfhtlcsigV.push(htlcctfv1)
+    ctfhtlcsigV.push(htlcctfv2)
+    ctfhtlcsigR.push(htlcctfr1)
+    ctfhtlcsigR.push(htlcctfr2)
+    ctfhtlcsigS.push(htlcctfs1)
+    ctfhtlcsigS.push(htlcctfs2)
+
     var htlcCTFsigs = htlcCTFsig1+htlcCTFsig2.substr(2, htlcCTFsig2.length)
-    var htlcCTFaddress = web3.sha3(htlcCTFsigs, {encoding: 'hex'})
+    //var htlcCTFaddress = web3.sha3(htlcCTFsigs, {encoding: 'hex'})
+    var htlcCTFaddress = htlcCTFhmsg
     console.log('htlc counterfactual address: ' + htlcCTFaddress + '\n')
 
     console.log('generating HTLC state with transaction root...')
 
-
-
     console.log('generating HTLC transactions...')
     var locktxs = []
     var tx1 = generateHTLCtx(0, 3, web3.sha3('secret1'), 1521436136)
-    var tx2 = generateHTLCtx(1, 6, web3.sha3('secret2'), 1521436137)
+    var tx2 = generateHTLCtx(1, 1, web3.sha3('secret2'), 1521436137)
     var tx3 = generateHTLCtx(2, 2, web3.sha3('secret3'), 1521436138)
-    var tx4 = generateHTLCtx(3, 9, web3.sha3('secret4'), 1521436139)
+    var tx4 = generateHTLCtx(3, 2, web3.sha3('secret4'), 1521436139)
 
     locktxs.push(tx1)
     locktxs.push(tx2)
@@ -435,16 +448,155 @@ contract('counterfactual payment channel', function(accounts) {
     let proof = generateMerkleProof(locktxs, 0)
     console.log('proof: ')
     console.log(proof+'\n')
-    console.log('generating HTLC SPC state with agreed tx roothash')
-    let HTLCstate = generateHTLCSPCstate(0, 4, 3,)
+
+    var state4 = generateHTLCSPCstate(
+      0, 
+      4, 
+      3, 
+      accounts[0], 
+      accounts[1], 
+      5, 
+      5,
+      // begin paywall state
+      7,
+      1,
+      paymentCTFaddress,
+      0,
+      1,
+      0,
+      accounts[0],
+      accounts[1],
+      9,
+      1,
+      // begin bi-directional state
+      8, // statelength
+      2,
+      bidirectionalCTFaddress,
+      0,
+      0,
+      0,
+      accounts[0],
+      accounts[1],
+      10, //bond total
+      5,
+      5,
+      // begin HTLC tx state
+      8,
+      3,
+      htlcCTFaddress,
+      0,
+      0,
+      0,
+      accounts[1],
+      accounts[0],
+      10, // remaining bond BEFORE htlc txs
+      0,
+      roothash
+    )
+
+    var hmsgv3 = web3.sha3(state4, {encoding: 'hex'})
+    console.log('hashed msg: ' + hmsgv3)
+
+    var sig1v3 = await web3.eth.sign(accounts[0], hmsgv3)
+    var rv3 = sig1v3.substr(0,66)
+    var sv3 = "0x" + sig1v3.substr(66,64)
+    var vv3 = parseInt(sig1v3.substr(130, 2)) + 27
+
+    console.log('{Simulated network send from A to receiver of state_4 (htlc root commit)}')
+    
+    var sig2v3 = await web3.eth.sign(accounts[1], hmsgv3)
+    var r2v3 = sig2v3.substr(0,66)
+    var s2v3 = "0x" + sig2v3.substr(66,64)
+    var v2v3 = parseInt(sig2v3.substr(130, 2)) + 27
+
+    console.log('State_4: ' + state4+'\n')
+
 
     console.log('begin settling HTLC channel byzantine state')
     console.log('deploying HTLC and SPC counterfactual contracts...')
+    receipt = await reg.deployCTF(ctfSPCstate, ctfsigV, ctfsigR, ctfsigS)
+    gasUsed = receipt.receipt.gasUsed
+    console.log('Gas Used: ' + gasUsed)
 
-    await htlc.updateBalances(roothash, proof, 0, 3, web3.sha3('secret1'), 1521436136, 'secret1')
-    let hroot = await htlc.lockroot()
-    console.log('client roothash: '+roothash)
-    console.log('solidity roothash: '+hroot)
+    console.log(ctfSPCstate.length)
+    console.log('---')
+
+    let deployAddress = await reg.resolveAddress(CTFaddress)
+
+    // reregister the spc instance to the one the registry deployed
+    spc = await SPC.at(deployAddress);
+
+    console.log('counterfactual SPC contract deployed and mapped by registry: ' + deployAddress)
+
+    // receipt = await reg.deployCTF(ctfpaymentstate, ctfpaysigV, ctfpaysigR, ctfpaysigS)
+    // gasUsed = receipt.receipt.gasUsed
+    // console.log('Gas Used: ' + gasUsed)
+
+    receipt = await reg.deployCTF(ctfhtlcstate, ctfhtlcsigV, ctfhtlcsigR, ctfhtlcsigS)
+    gasUsed = receipt.receipt.gasUsed
+    console.log('Gas Used: ' + gasUsed)
+
+    deployAddress = await reg.resolveAddress(htlcCTFaddress)
+
+
+
+    console.log('counterfactual HTLC contract deployed and mapped by registry: ' + deployAddress)
+
+    console.log('party A starting settlement of htlc root channel...\n')
+
+    var sigV = []
+    var sigR = []
+    var sigS = []
+
+    sigV.push(vv3)
+    sigV.push(v2v3)
+    sigR.push(rv3)
+    sigR.push(r2v3)
+    sigS.push(sv3)
+    sigS.push(s2v3)
+
+    await spc.startSettleStateGame(3, state4, sigV, sigR, sigS)
+
+    let spcPartyA = await spc.partyA()
+    let spcBalA = await spc.balanceA()
+    let spcPartyB = await spc.partyB()
+    let spcBalB = await spc.balanceB()
+
+    let subchan = await spc.getSubChannel(3)
+
+    console.log('address A: '+ spcPartyA+' balance A: '+ spcBalA)
+    console.log('address B: '+ spcPartyB+' balance B: '+ spcBalB)
+    console.log('sub channel struct in settlement: ' + subchan[1]+'\n')
+
+    console.log('Party B challenging settlement...')
+
+    // // TODO
+
+    // console.log('party A closing sub channel with timeout...')
+    // //await spc.closeWithTimeoutGame(state2, 1, sigV, sigR, sigS)
+    // await spc.closeWithTimeoutGame(1, sigV, sigR, sigS)
+
+    // console.log('sub channel closed')
+    // spcPartyA = await spc.partyA()
+    // spcBalA = await spc.balanceA()
+    // spcPartyB = await spc.partyB()
+    // spcBalB = await spc.balanceB()
+    // console.log('address A: '+ spcPartyA+' balance A: '+ spcBalA)
+    // console.log('address B: '+ spcPartyB+' balance B: '+ spcBalB)
+
+    // let ctfpaywall = await Payment.at(deployAddress)
+
+    // let ctfpaywallbala = await ctfpaywall.balanceA()
+    // console.log('ctf paywall balance A: ' + ctfpaywallbala)
+    // let ctfpaywallbalb = await ctfpaywall.balanceB()
+    // console.log('ctf paywall balance B: ' + ctfpaywallbalb)
+
+
+    // await htlc.updateBalances(roothash, proof, 0, 3, web3.sha3('secret1'), 1521436136, 'secret1')
+    // let hroot = await htlc.lockroot()
+    // console.log('client roothash: '+roothash)
+    // console.log('solidity roothash: '+hroot)
+    //console.log(state4)
   })
 
 })
@@ -538,6 +690,7 @@ function recursiveCalls(tempHashes, index, proof, target) {
   return recursiveCalls(newHashs, newIndex, proof, targethash)
 }
 
+// as you can see, state is getting large, let's merkle this shit
 function generateHTLCSPCstate(
   _sentinel, 
   _seq, 
@@ -549,16 +702,133 @@ function generateHTLCSPCstate(
   _stateLength, 
   _intType, 
   _CTFAddress,
-  _CTFsentinel,
+  _CTFsentinel, // may not need close flags for subchannels since udating the state on the metachannel is the same
   _CTFsequence,
   _CTFsettlementPeriod,
   _CTFsender,
   _CTFreceiver,
   _CTFbond,
   _CTFbalanceReceiver,
-  _CTFHTLCroot
+  _stateLength2,
+  _intType2, 
+  _CTFAddress2,
+  _CTFsentinel2,
+  _CTFsequence2,
+  _CTFsettlementPeriod2,
+  _CTFsender2,
+  _CTFreceiver2,
+  _CTFbond2,
+  _CTFbalanceA2,
+  _CTFbalanceB2,
+  _stateLength3,
+  _intType3,
+  _CTFAddress3,
+  _CTFsentinel3,
+  _CTFsequence3,
+  _CTFsettlementPeriod3,
+  _CTFsender3,
+  _CTFreceiver3,
+  _CTFbond3,
+  _CTFbalanceReceiver2,
+  _CTFlockroot
 ) {
+    // [0-31] isClose flag
+    // [32-63] sequence
+    // [64-95] timeout
+    // [96-127] sender
+    // [128-159] receiver
+    // [160-191] bond 
+    // [192-223] balance A
+    // [224-255] balance B
+    // [256-287] lockTXroot
 
+    var sentinel = padBytes32(web3.toHex(_sentinel))
+    var sequence = padBytes32(web3.toHex(_seq))
+    var numChannels = padBytes32(web3.toHex(_numChan))
+    var addressA = padBytes32(_addyA)
+    var addressB = padBytes32(_addyB)
+    var balanceA = padBytes32(web3.toHex(web3.toWei(_balA, 'ether')))
+    var balanceB = padBytes32(web3.toHex(web3.toWei(_balB, 'ether')))
+
+    var stateLength = padBytes32(web3.toHex(_stateLength))
+    var intType = padBytes32(web3.toHex(_intType))
+    var CTFaddress = padBytes32(_CTFAddress)
+    var CTFsentinel = padBytes32(web3.toHex(_CTFsentinel))
+    var CTFsequence = padBytes32(web3.toHex(_CTFsequence))
+    var CTFsettlementPeriod = padBytes32(web3.toHex(_CTFsettlementPeriod))
+    var CTFsender = padBytes32(_CTFsender)
+    var CTFreceiver = padBytes32(_CTFreceiver)
+    var CTFbond = padBytes32(web3.toHex(web3.toWei(_CTFbond, 'ether')))
+    var CTFbalanceReceiver = padBytes32(web3.toHex(web3.toWei(_CTFbalanceReceiver, 'ether')))
+
+    var stateLength2 = padBytes32(web3.toHex(_stateLength2))
+    var intType2 = padBytes32(web3.toHex(_intType2))
+    var CTFaddress2 = padBytes32(_CTFAddress2)
+    var CTFsentinel2 = padBytes32(web3.toHex(_CTFsentinel2))
+    var CTFsequence2 = padBytes32(web3.toHex(_CTFsequence2))
+    var CTFsettlementPeriod2 = padBytes32(web3.toHex(_CTFsettlementPeriod2))
+    var CTFsender2 = padBytes32(_CTFsender2)
+    var CTFreceiver2 = padBytes32(_CTFreceiver2)
+    var CTFbond2 = padBytes32(web3.toHex(web3.toWei(_CTFbond2, 'ether')))
+    var CTFbalanceA2 = padBytes32(web3.toHex(web3.toWei(_CTFbalanceA2, 'ether')))
+    var CTFbalanceB2 = padBytes32(web3.toHex(web3.toWei(_CTFbalanceB2, 'ether')))
+
+    var stateLength3 = padBytes32(web3.toHex(_stateLength3))
+    var intType3 = padBytes32(web3.toHex(_intType3))
+    var CTFaddress3 = padBytes32(_CTFAddress3)
+    var CTFsentinel3 = padBytes32(web3.toHex(_CTFsentinel3))
+    var CTFsequence3 = padBytes32(web3.toHex(_CTFsequence3))
+    var CTFsettlementPeriod3 = padBytes32(web3.toHex(_CTFsettlementPeriod3))
+    var CTFsender3 = padBytes32(_CTFsender3)
+    var CTFreceiver3 = padBytes32(_CTFreceiver3)
+    var CTFbond3 = padBytes32(web3.toHex(web3.toWei(_CTFbond3, 'ether')))
+    var CTFbalanceReceiver2 = padBytes32(web3.toHex(web3.toWei(_CTFbalanceReceiver2, 'ether')))
+    var CTFlockroot = padBytes32(_CTFlockroot)
+
+    var m = sentinel +
+        sequence.substr(2, sequence.length) +
+        numChannels.substr(2,numChannels.length) +
+        addressA.substr(2, addressA.length) +
+        addressB.substr(2, addressB.length) +
+        balanceA.substr(2, balanceA.length) + 
+        balanceB.substr(2, balanceB.length) +
+        //
+        stateLength.substr(2, stateLength.length) +
+        intType.substr(2, intType.length) +
+        CTFaddress.substr(2, CTFaddress.length) +
+        CTFsentinel.substr(2, CTFsentinel.length) +
+        CTFsequence.substr(2, CTFsequence.length) +
+        CTFsettlementPeriod.substr(2, CTFsettlementPeriod.length) +
+        CTFsender.substr(2, CTFsender.length) +
+        CTFreceiver.substr(2, CTFreceiver.length) +
+        CTFbond.substr(2, CTFbond.length) +
+        CTFbalanceReceiver.substr(2, CTFbalanceReceiver.length)+
+        //
+        stateLength2.substr(2, stateLength2.length) +
+        intType2.substr(2, intType2.length) +
+        CTFaddress2.substr(2, CTFaddress2.length) +
+        CTFsentinel2.substr(2, CTFsentinel2.length) +
+        CTFsequence2.substr(2, CTFsequence2.length) +
+        CTFsettlementPeriod2.substr(2, CTFsettlementPeriod2.length) +
+        CTFsender2.substr(2, CTFsender2.length) +
+        CTFreceiver2.substr(2, CTFreceiver2.length) +
+        CTFbond2.substr(2, CTFbond2.length) +
+        CTFbalanceA2.substr(2, CTFbalanceA2.length) +
+        CTFbalanceB2.substr(2, CTFbalanceB2.length) +
+        //
+        stateLength3.substr(2, stateLength3.length) +
+        intType3.substr(2, intType3.length) +
+        CTFaddress3.substr(2, CTFaddress3.length) +
+        CTFsentinel3.substr(2, CTFsentinel3.length) +
+        CTFsequence3.substr(2, CTFsequence3.length) +
+        CTFsettlementPeriod3.substr(2, CTFsettlementPeriod3.length) +
+        CTFsender3.substr(2, CTFsender3.length) +
+        CTFreceiver3.substr(2, CTFreceiver3.length) +
+        CTFbond3.substr(2, CTFbond3.length) +
+        CTFbalanceReceiver2.substr(2, CTFbalanceReceiver2.length) +
+        CTFlockroot.substr(2, CTFlockroot.length)
+
+    return m
 }
 
 function generateBidirectionalSPCState(
