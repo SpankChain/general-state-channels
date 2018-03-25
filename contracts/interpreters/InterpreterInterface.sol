@@ -23,6 +23,8 @@ contract InterpreterInterface {
 
     function initState(bytes _state) public returns (bool);
 
+    function finalizeState(bytes _state) public returns (bool);
+
     function () public payable {
 
     }

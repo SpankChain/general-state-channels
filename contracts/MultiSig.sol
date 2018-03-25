@@ -17,11 +17,10 @@ contract MultiSig {
     // STATE
     //    32 isClose - Cooperative close flag
     //    64 sequence
-    //    96 timeout
-    //    128 address 1
-    //    160 address 2
-    //    192 Meta Channel CTF address
-    //    224 Sub-Channel Root Hash
+    //    96 address 1
+    //    128 address 2
+    //    160 Meta Channel CTF address
+    //    192 Sub-Channel Root Hash
     //    225+ General State
 
     // General State - Extensions must be able to handle these format
@@ -98,7 +97,10 @@ contract MultiSig {
 
     // TODO this is currently limited to monetary state
     function updateAgreement() payable {
-
+        require(msg.sender == partyA || msg.sender == partyB);
+        if(msg.sender == partyA) { balanceA+= msg.value; }
+        if(msg.sender == partyB) { balanceB+= msg.value; }
+        bonded += msg.value;
     }
 
     // TODO allow executing subchannel state. this will allow an on-chain sub-channel close

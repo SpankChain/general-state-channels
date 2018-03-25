@@ -57,9 +57,12 @@ contract InterpretMetaChannel is InterpreterInterface {
         // sub-channel state should be passed to the interpreter to decode
         // we decode the overall state to get the agree roothash of subchannels
         _decodeState(_state);
-        bytes32 _txHash = keccak256(_subchannel);
+        bytes32 _stateHash = keccak256(_subchannel);
         // do proof of inclusing in of sub-channel state in root state
-        require(_isContained(_txHash, _proof));
+        require(_isContained(_stateHash, _proof));
+
+        InterpreterInterface deployedInterpreter = InterpreterInterface(registry.resolveAddress(subChannels[_channelIndex].CTFaddress));
+        deployedInterpreter.initState(_subchannel);
 
         // consider running some logic on the state from the interpreter to validate 
         // the new state obeys transition rules
@@ -90,19 +93,22 @@ contract InterpretMetaChannel is InterpreterInterface {
 
         // get roothash
         _decodeState(_state);
-        bytes32 _txHash = keccak256(_subchannel);
-        require(_isContained(_txHash, _proof));
+        bytes32 _stateHash = keccak256(_subchannel);
+        require(_isContained(_stateHash, _proof));
 
         // consult the now deployed special channel logic to see if sequence is higher
         // figure out how decode the CTFaddress from the state
         InterpreterInterface deployedInterpreter = InterpreterInterface(registry.resolveAddress(subChannels[_channelIndex].CTFaddress));
         require(deployedInterpreter.isSequenceHigher(subChannels[_channelIndex].state, _subchannel));
+        
+        deployedInterpreter.initState(_subchannel);
 
         subChannels[_channelIndex].settlementPeriodEnd = now + subChannels[_channelIndex].settlementPeriodLength;
         subChannels[_channelIndex].state = _subchannel;
     }
 
-
+    // in the case of HTLC sub-channels, this must be called after the subchannel interpreter
+    // has had enough time to play out the locked txs and update is balances
     function closeWithTimeoutSubchannel(uint _channelIndex) public {
         InterpreterInterface deployedInterpreter = InterpreterInterface(registry.resolveAddress(subChannels[_channelIndex].CTFaddress));
 
@@ -110,7 +116,7 @@ contract InterpretMetaChannel is InterpreterInterface {
         require(subChannels[_channelIndex].isClose == 0);
         require(subChannels[_channelIndex].isInSettlementState == 1);
 
-        deployedInterpreter.initState(subChannels[_channelIndex].state);
+        deployedInterpreter.finalizeState(subChannels[_channelIndex].state);
 
         // update the meta-channel state for balance
         balanceA += deployedInterpreter.balanceA();
