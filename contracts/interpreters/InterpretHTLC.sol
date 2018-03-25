@@ -16,9 +16,11 @@ contract InterpretHTLC is InterpreterInterface {
 
     uint256 totalBond = 0;
     bytes32 public lockroot;
-    uint256 lockedNonce = 0;
-    uint256 sequence = 0;
-    bytes state;
+    uint256 public lockedNonce = 0;
+    uint256 public sequence = 0;
+    uint256 public timeout;
+    bytes public state;
+
     // struct Lock {
     //     uint256 amount;
     //     bytes32 hash;
@@ -52,7 +54,9 @@ contract InterpretHTLC is InterpreterInterface {
         return true;
     }
 
-
+    // TODO: This needs to reject calls in the sub-channel is being settled. This will give both 
+    // parties enough time to agree on the root hash to check transactions against. This means that the
+    // lockTX timeouts need to start after the final settling to allow time for the secret to be revealed
     function updateBalances(bytes32 _root, bytes _proof, uint256 _lockedNonce, uint256 _amount, bytes32 _hash, uint256 _timeout, bytes _secret) public returns (bool) {
         require(now >= getTimeout(state));
         require(_lockedNonce == lockedNonce);
@@ -91,13 +95,8 @@ contract InterpretHTLC is InterpreterInterface {
         }
     }
 
-    function isAddressInState(address _queryAddress) public returns (bool) {
-        return true;
-    }
-
-
     // just look for receiver sig
-    function quickClose(bytes _data, uint _gameIndex) public returns (bool) {
+    function quickClose(bytes _data) public returns (bool) {
         require(balanceA + balanceB == totalBond);
         return true;
     }
@@ -112,8 +111,8 @@ contract InterpretHTLC is InterpreterInterface {
 
     // this needs to be permissioned to allow only calls from participants or only 
     // callable from the ctf contract pointing to it
-    function initState(bytes _state, uint _gameIndex, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public returns (bool) {
-        _decodeState(_state, _gameIndex);
+    function initState(bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public returns (bool) {
+        _decodeState(_state);
         state = _state;
     }
 
@@ -136,78 +135,33 @@ contract InterpretHTLC is InterpreterInterface {
 
     // this needs to be permissioned to allow only calls from participants or only 
     // callable from the ctf contract pointing to it
-    function _decodeState(bytes _state, uint _gameIndex) {
-        // SPC State
-        // [
-        //    32 isClose
-        //    64 sequence
-        //    96 numInstalledChannels
-        //    128 address 1
-        //    160 address 2
-        //    192 balance 1
-        //    224 balance 2
-        //    256 channel 1 state length
-        //    288 channel 1 interpreter type
-        //    320 channel 1 CTF address
-        //    [
-        //        isClose
-        //        sequence
-        //        settlement period length
-        //        channel specific state
-        //        ...
-        //    ]
-        //    channel 2 state length
-        //    channel 2 interpreter type
-        //    channel 2 CTF address
-        //    [
-        //        isClose
-        //        sequence
-        //        settlement period length
-        //        channel specific state
-        //        ...
-        //    ]
-        //    ...
-        // ]
+    function _decodeState(bytes _state) {
+        // State
+        // [0-31] isClose flag
+        // [32-63] sequence
+        // [64-95] timeout
+        // [96-127] sender
+        // [128-159] receiver
+        // [160-191] bond 
+        // [192-223] balance A
+        // [224-255] balance B
+        // [256-287] lockTXroot
 
         uint256 _bond;
         uint256 _balanceB;
         bytes32 _lockroot;
+        uint256 _timeout;
 
-        // game index 0 means this is an initial state where there have
-        // been no games loaded, so this state can't be assembled
-        if (_gameIndex != 0) {
-            // push pointer past the addresses and balances
-            uint pos = 256;
-            uint _gameLength;
-
-            assembly {
-                _gameLength := mload(add(_state, pos))
-            }
-
-            _gameLength = _gameLength*32;
-
-            if(_gameIndex > 1) {
-                pos+=_gameLength+32+32+32;
-            }
-
-            for(uint i=1; i<_gameIndex; i++) {
-                assembly {
-                    _gameLength := mload(add(_state, pos))
-                }
-                pos+=_gameLength+32+32+32;
-            }
-
-            if(_gameIndex > 1) {
-                pos-= 32+32;
-            }
-            assembly {
-                _bond := mload(add(_state, add(pos, 256)))
-                _balanceB := mload(add(_state, add(pos, 288)))
-                _lockroot := mload(add(_state, add(pos, 320)))
-            }
-            balanceA = _bond;
-            balanceB = _balanceB;
-            lockroot = _lockroot;
+        assembly {
+            _timeout := mload(add(_state, 96))
+            _bond := mload(add(_state, 224))
+            _balanceB := mload(add(_state, 256))
+            _lockroot := mload(add(_state, 288))
         }
+
+        balanceA = _bond;
+        balanceB = _balanceB;
+        lockroot = _lockroot;
+        timeout = _timeout;
     }
 }

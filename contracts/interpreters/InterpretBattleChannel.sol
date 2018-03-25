@@ -87,17 +87,6 @@ contract InterpretBattleChannel is InterpreterInterface {
         return true;
     }
 
-    function isAddressInState(address _queryAddress) public returns (bool) {
-        require(battleKitties[_queryAddress].owner != 0x0);
-        require(battleKitties[_queryAddress].inState == true);
-
-        if(battleKitties[_queryAddress].joined == false) {
-            battleKitties[_queryAddress].joined == true;
-            numJoined++;
-        }
-
-        return true;
-    }
 
     function hasAllSigs(address[] _recovered) public returns (bool) {
         require(_recovered.length == numParties);

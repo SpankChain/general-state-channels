@@ -30,14 +30,9 @@ contract InterpretBidirectional is InterpreterInterface {
         return true;
     }
 
-    function isAddressInState(address _queryAddress) public returns (bool) {
-        return true;
-    }
-
-
     // just look for receiver sig
-    function quickClose(bytes _data, uint _gameIndex) public returns (bool) {
-        _decodeState(_data, _gameIndex);
+    function quickClose(bytes _data) public returns (bool) {
+        _decodeState(_data);
         require(balanceA + balanceB == totalBond);
         return true;
     }
@@ -51,11 +46,11 @@ contract InterpretBidirectional is InterpreterInterface {
     }
 
 
-    function initState(bytes _state, uint _gameIndex, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public returns (bool) {
-        _decodeState(_state, _gameIndex);
+    function initState(bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public returns (bool) {
+        _decodeState(_state);
     }
 
-    function _decodeState(bytes _state, uint _gameIndex) {
+    function _decodeState(bytes _state) {
         // SPC State
         // [
         //    32 isClose
@@ -92,40 +87,14 @@ contract InterpretBidirectional is InterpreterInterface {
         uint256 _balanceA;
         uint256 _balanceB;
 
-        // game index 0 means this is an initial state where there have
-        // been no games loaded, so this state can't be assembled
-        if (_gameIndex != 0) {
-            // push pointer past the addresses and balances
-            uint pos = 256;
-            uint _gameLength;
 
-            assembly {
-                _gameLength := mload(add(_state, pos))
-            }
-
-            _gameLength = _gameLength*32;
-
-            if(_gameIndex > 1) {
-                pos+=_gameLength+32+32+32;
-            }
-
-            for(uint i=1; i<_gameIndex; i++) {
-                assembly {
-                    _gameLength := mload(add(_state, pos))
-                }
-                pos+=_gameLength+32+32+32;
-            }
-
-            if(_gameIndex > 1) {
-                pos-= 32+32;
-            }
-            assembly {
-                _bond := mload(add(_state, add(pos, 256)))
-                _balanceA := mload(add(_state, add(pos, 288)))
-                _balanceB := mload(add(_state, add(pos, 320)))
-            }
-            balanceA = _balanceA;
-            balanceB = _balanceB;
+        assembly {
+            _bond := mload(add(_state, 256))
+            _balanceA := mload(add(_state, 288))
+            _balanceB := mload(add(_state, 320))
         }
+
+        balanceA = _balanceA;
+        balanceB = _balanceB;
     }
 }
