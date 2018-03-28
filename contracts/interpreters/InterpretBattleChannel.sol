@@ -1,6 +1,7 @@
 pragma solidity ^0.4.18;
 
 import "./InterpreterInterface.sol";
+import "../ChannelRegistry.sol";
 
 contract InterpretBattleChannel is InterpreterInterface {
     // State
@@ -57,8 +58,22 @@ contract InterpretBattleChannel is InterpreterInterface {
     uint256 public numParties = 0;
 
     address[] partyArr;
+    
+    bytes32 public CTFMetaAddress;
+    ChannelRegistry public registry;
 
-    function initState(bytes _data) public returns (bool) {
+    modifier onlyMeta() {
+        require(msg.sender == registry.resolveAddress(CTFMetaAddress));
+        _;
+    }
+
+    function InterpretBattleChannel(bytes32 _CTFMetaAddress, address _registry) {
+        CTFMetaAddress = _CTFMetaAddress;
+        registry = ChannelRegistry(_registry);
+    }
+
+    // TODO: Restrict to modifier
+    function initState(bytes _data) onlyMeta returns (bool) {
         _decodeState(_data);
         return true;
     }
@@ -87,67 +102,10 @@ contract InterpretBattleChannel is InterpreterInterface {
         return true;
     }
 
-    function isAddressInState(address _queryAddress) public returns (bool) {
-        require(battleKitties[_queryAddress].owner != 0x0);
-        require(battleKitties[_queryAddress].inState == true);
-
-        if(battleKitties[_queryAddress].joined == false) {
-            battleKitties[_queryAddress].joined == true;
-            numJoined++;
-        }
-
-        return true;
-    }
-
-    function hasAllSigs(address[] _recovered) public returns (bool) {
-        require(_recovered.length == numParties);
-
-        for(uint i=0; i<_recovered.length; i++) {
-            //require(joinedParties[_recovered[i]] == _recovered[i]);
-            require(battleKitties[_recovered[i]].inState == true);
-        }
-
-        return true;
-    }
-
-    function allJoined() public returns (bool) {
-        if(numJoined == numParties){
-            allJoin = true;
-        }
-
-        return allJoin;
-    }
 
     function challenge(address _violator, bytes _state) public {
         // todo
         // require(1==2);
-    }
-
-    function quickClose(bytes _state) public returns (bool) {
-
-        _decodeState(_state);
-
-        for(uint i=0; i<numParties; i++) {
-            // total balances and bond check
-            partyArr[i].transfer(battleKitties[partyArr[i]].balance);
-        }
-
-        // check to be sure reverting here reverts the transfers
-        // balance total loop
-
-        return true;
-    }
-
-
-    function run(bytes _data) public {
-        uint sequence;
-
-        assembly {
-            sequence := mload(add(_data, 64))
-        }
-
-        _decodeState(_data);
-
     }
 
     function _decodeState(bytes state) internal {
