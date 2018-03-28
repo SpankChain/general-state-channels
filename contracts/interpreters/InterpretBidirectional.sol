@@ -37,16 +37,8 @@ contract InterpretBidirectional is InterpreterInterface {
         return true;
     }
 
-    function startSettleStateGame(uint _gameIndex, bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
-
-    }
-
-    function closeWithTimeoutGame(uint _gameIndex, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
-
-    }
-
-
-    function initState(bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public returns (bool) {
+    // TODO: MODIFIER
+    function initState(bytes _state) returns (bool) {
         _decodeState(_state);
     }
 

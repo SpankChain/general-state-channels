@@ -21,9 +21,9 @@ contract InterpreterInterface {
 
     //function closeWithTimeoutGame(uint _gameIndex, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public;
 
-    function initState(bytes _state) public returns (bool);
+    function initState(bytes _state) returns (bool);
 
-    function finalizeState(bytes _state) public returns (bool);
+    function finalizeState(bytes _state) returns (bool);
 
     function () public payable {
 

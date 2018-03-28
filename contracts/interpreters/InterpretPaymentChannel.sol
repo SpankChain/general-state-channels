@@ -36,23 +36,8 @@ contract InterpretPaymentChannel is InterpreterInterface {
         return true;
     }
 
-    // just look for receiver sig
-    function quickClose(bytes _data) public returns (bool) {
-        _decodeState(_data);
-        require(balanceA + balanceB == totalBond);
-        return true;
-    }
-
-    function startSettleStateGame(uint _gameIndex, bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
-
-    }
-
-    function closeWithTimeoutGame(uint _gameIndex, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
-
-    }
-
-
-    function initState(bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public returns (bool) {
+    // TODO: MODIFY
+    function initState(bytes _state) returns (bool) {
         _decodeState(_state);
         totalBond = balanceA + balanceB;
     }

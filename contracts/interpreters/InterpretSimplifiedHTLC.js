@@ -2,7 +2,7 @@ pragma solidity ^0.4.18;
 
 import "./InterpreterInterface.sol";
 
-contract InterpretHTLC is InterpreterInterface {
+contract InterpretSimplifiedHTLC is InterpreterInterface {
     // State
     // [0-31] isClose flag
     // [32-63] sequence
@@ -104,14 +104,14 @@ contract InterpretHTLC is InterpreterInterface {
 
     // this needs to be permissioned to allow only calls from participants or only 
     // callable from the ctf contract pointing to it
-    function initState(bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) onlyMeta returns (bool) {
+    function initState(bytes _state) onlyMeta public returns (bool) {
         _decodeState(_state);
         state = _state;
     }
 
     // this needs to be permissioned to allow only calls from participants or only 
     // callable from the ctf contract pointing to it
-    function finalizeState(bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) onlyMeta returns (bool) {
+    function finalizeState(bytes _state) onlyMeta public returns (bool) {
         // TODO: find best way to make this throw if the longest locked tx time hasn't elapsed
         require(now >= timeout);
         _decodeState(_state);

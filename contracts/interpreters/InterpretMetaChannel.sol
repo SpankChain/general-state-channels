@@ -23,7 +23,7 @@ contract InterpretMetaChannel is InterpreterInterface {
     mapping(uint => SubChannel) subChannels;
 
     // meta-channel state
-    uint public isClose = 0;
+    uint public isClose = 0; // 1: Meta Channel open 0: Channel closed
     address public partyA;
     address public partyB;
     uint256 public balanceA;
@@ -44,11 +44,6 @@ contract InterpretMetaChannel is InterpreterInterface {
 
     // entry point for settlement of byzantine sub-channel
     function startSettleStateSubchannel(uint _channelIndex, bytes _proof, bytes _state, bytes _subchannel, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
-        // sub-channel must be open
-        require(subChannels[_channelIndex].isClose == 0);
-        // sub-channel must not already be in a settle state
-        require(subChannels[_channelIndex].isInSettlementState == 0);
-
         // check that this state is signed
         address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
         address _partyB = _getSig(_state, _v[1], _r[1], _s[1]);
@@ -56,7 +51,13 @@ contract InterpretMetaChannel is InterpreterInterface {
 
         // sub-channel state should be passed to the interpreter to decode
         // we decode the overall state to get the agree roothash of subchannels
+        // and other actionable state like timeout
         _decodeState(_state);
+        // sub-channel must be open
+        require(subChannels[_channelIndex].isClose == 0);
+        // sub-channel must not already be in a settle state
+        require(subChannels[_channelIndex].isInSettlementState == 0);
+
         bytes32 _stateHash = keccak256(_subchannel);
         // do proof of inclusing in of sub-channel state in root state
         require(_isContained(_stateHash, _proof));
@@ -83,8 +84,6 @@ contract InterpretMetaChannel is InterpreterInterface {
     // continue off chain the parties will have to update the timeout onchian with this setup
 
     function challengeSettleStateSubchannel(uint _channelIndex, bytes _proof, bytes _state, bytes _subchannel, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
-        require(subChannels[_channelIndex].isInSettlementState == 1);
-        require(subChannels[_channelIndex].settlementPeriodEnd <= now);
         // check sigs
         address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
         address _partyB = _getSig(_state, _v[1], _r[1], _s[1]);
@@ -93,6 +92,10 @@ contract InterpretMetaChannel is InterpreterInterface {
 
         // get roothash
         _decodeState(_state);
+
+        require(subChannels[_channelIndex].isInSettlementState == 1);
+        require(subChannels[_channelIndex].settlementPeriodEnd <= now);
+
         bytes32 _stateHash = keccak256(_subchannel);
         require(_isContained(_stateHash, _proof));
 
@@ -165,7 +168,7 @@ contract InterpretMetaChannel is InterpreterInterface {
         require(isClose == 0);
         require(isInSettlementState == 1);
 
-        initState(state);
+        _decodeState(state);
         statehash = keccak256(state);
         isClose = 1;
     }
@@ -268,10 +271,6 @@ contract InterpretMetaChannel is InterpreterInterface {
         //address a = ECRecovery.recover(prefixedHash, _s);
 
         return(a);
-    }
-
-    function initState(bytes _state) public returns (bool) {
-        _decodeState(_state);
     }
 
     function getSubChannel(uint _channelIndex)
