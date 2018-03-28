@@ -55,7 +55,8 @@ contract InterpretMetaChannel is InterpreterInterface {
         _decodeState(_state);
         // sub-channel must be open
         require(subChannels[_channelIndex].isClose == 0);
-        // sub-channel must not already be in a settle state
+        // sub-channel must not already be in a settle state, this should
+        // only be called once to initiate settlement period
         require(subChannels[_channelIndex].isInSettlementState == 0);
 
         bytes32 _stateHash = keccak256(_subchannel);

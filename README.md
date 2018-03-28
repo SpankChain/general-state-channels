@@ -2,7 +2,7 @@
 
 # WIP!
 
-A PoC combining insights derived from [L4](https://l4.ventures/) / [Counterfactual](https://counterfactual.com/), [Machinomy](https://machinomy.com/), [Lightning Network](https://lightning.network/), [Eth](https://www.ethereum.org/foundation), [Raiden](https://raiden.network/), and [Spankchain](https://spankchain.com/) research. This system abstracts the state channel by allowing two participants to agree about final state in the channel. As long as both parties can come to consensus on this top level state, then many iterations of more complex logic may be played out that ultimately settles to this state. Only in cases that parties can't agree to the outcome of a state transition must they deploy the logic to settle the top state.
+A PoC combining insights derived from [L4](https://l4.ventures/) / [Counterfactual](https://counterfactual.com/), [Perun](https://www.perun.network/), [Machinomy](https://machinomy.com/), [Lightning Network](https://lightning.network/), [Eth](https://www.ethereum.org/foundation), [Raiden](https://raiden.network/), and [Spankchain](https://spankchain.com/) research. This system abstracts the state channel by allowing two participants to agree about final state in the channel. As long as both parties can come to consensus on this top level state, then many iterations of more complex logic may be played out that ultimately settles to this state. Only in cases that parties can't agree to the outcome of a state transition must they deploy the logic to settle the top state.
 
 ## Table of Contents:
 
@@ -10,6 +10,7 @@ A PoC combining insights derived from [L4](https://l4.ventures/) / [Counterfactu
   - [Single Direction Payment Channel](#single-direction-payment-channel)
   - [Bi-directional Payment Channel](#bi-directional-payment-channel)
   - [Hash Locked Transaction Channel](#hash-locked-transaction-channel)
+  - [Virtual Payment Channel](#virtual-payment-channel)
   - [Crypto Kitties Battle Channel](#crypto-kitties-battle-channel)
 - [Background Information](#background-information)
 - [General State MultiSig API](#general-state-multisig-api)
@@ -36,6 +37,10 @@ TODO
 TODO
 
 ### Hash Locked Transaction Channel
+
+TODO
+
+### Virtual Payment Channel
 
 TODO
 

@@ -1,6 +1,7 @@
 pragma solidity ^0.4.18;
 
 import "./InterpreterInterface.sol";
+import "../ChannelRegistry.sol";
 
 contract InterpretPaymentChannel is InterpreterInterface {
     // State
@@ -16,6 +17,21 @@ contract InterpretPaymentChannel is InterpreterInterface {
     // }
 
     uint256 public totalBond = 0;
+
+    
+    bytes32 public CTFMetaAddress;
+    ChannelRegistry public registry;
+
+    modifier onlyMeta() {
+        require(msg.sender == registry.resolveAddress(CTFMetaAddress));
+        _;
+    }
+
+    function InterpretPaymentChannel(bytes32 _CTFMetaAddress, address _registry) {
+        CTFMetaAddress = _CTFMetaAddress;
+        registry = ChannelRegistry(_registry);
+    }
+
     
     // This always returns true since the receiver should only
     // sign and close the highest balance they have
@@ -37,7 +53,7 @@ contract InterpretPaymentChannel is InterpreterInterface {
     }
 
     // TODO: MODIFY
-    function initState(bytes _state) returns (bool) {
+    function initState(bytes _state) onlyMeta returns (bool) {
         _decodeState(_state);
         totalBond = balanceA + balanceB;
     }

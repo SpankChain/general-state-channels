@@ -1,6 +1,7 @@
 pragma solidity ^0.4.18;
 
 import "./InterpreterInterface.sol";
+import "../ChannelRegistry.sol";
 
 contract InterpretHTLC is InterpreterInterface {
     // State
@@ -21,18 +22,20 @@ contract InterpretHTLC is InterpreterInterface {
     uint256 public sequence = 0;
     uint256 public timeout; // equal to the last timeout of locked txs
     bytes public state;
-    address public metaAddress;
 
-    // struct Lock {
-    //     uint256 amount;
-    //     bytes32 hash;
-    //     uint256 timeout;
-    // }
+    bytes32 public CTFMetaAddress;
+    ChannelRegistry public registry;
 
     modifier onlyMeta() {
-        require(msg.sender == metaAddress);
+        require(msg.sender == registry.resolveAddress(CTFMetaAddress));
         _;
     }
+
+    function InterpretHTLC(bytes32 _CTFMetaAddress, address _registry) {
+        CTFMetaAddress = _CTFMetaAddress;
+        registry = ChannelRegistry(_registry);
+    }
+
     // Lock lockedTx;
     // This always returns true since the receiver should only
     // sign and close the highest balance they have
@@ -155,20 +158,20 @@ contract InterpretHTLC is InterpreterInterface {
         uint256 _balanceB;
         bytes32 _lockroot;
         uint256 _timeout;
-        address _meta;
+        //address _meta;
 
         assembly {
             _timeout := mload(add(_state, 96))
             _bond := mload(add(_state, 224))
             _balanceB := mload(add(_state, 256))
             _lockroot := mload(add(_state, 288))
-            _meta := mload(add(_state, 320))
+            //_meta := mload(add(_state, 320))
         }
 
         balanceA = _bond;
         balanceB = _balanceB;
         lockroot = _lockroot;
         timeout = _timeout;
-        metaAddress = _meta;
+        //metaAddress = _meta;
     }
 }
