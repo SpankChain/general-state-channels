@@ -114,11 +114,11 @@ contract InterpretHTLC is InterpreterInterface {
 
     // this needs to be permissioned to allow only calls from participants or only 
     // callable from the ctf contract pointing to it
-    function finalizeState(bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) onlyMeta returns (bool) {
+    function finalizeState(bytes _state) onlyMeta returns (bool) {
         // TODO: find best way to make this throw if the longest locked tx time hasn't elapsed
         require(now >= timeout);
-        _decodeState(_state);
-        state = _state;
+        //_decodeState(_state);
+        //state = _state;
     }
 
 
@@ -146,7 +146,17 @@ contract InterpretHTLC is InterpreterInterface {
         // State
         // [0-31] isClose flag
         // [32-63] sequence
-        // [64-95] timeout
+        // [64-95] timeout // the longest timeout on all hashlocks, this should always be
+        // shorter than the possible length of channel timeout if brought on chain.
+
+        // ie 
+        //   channel timeout = 1000 ms
+        //   tx1 timout = now + (t < 1000ms)
+        //      some time elapses, tx1's secret should be reveled within 1000ms
+        //      or its assumed to be invalid and should not update the state balances
+        //      with the locked tx amount client side
+        //   tx2 timout = now + (t < 1000ms)
+        
         // [96-127] sender
         // [128-159] receiver
         // [160-191] bond 
@@ -157,11 +167,11 @@ contract InterpretHTLC is InterpreterInterface {
         uint256 _bond;
         uint256 _balanceB;
         bytes32 _lockroot;
-        uint256 _timeout;
+        //uint256 _timeout;
         //address _meta;
 
         assembly {
-            _timeout := mload(add(_state, 96))
+            //_timeout := mload(add(_state, 96))
             _bond := mload(add(_state, 224))
             _balanceB := mload(add(_state, 256))
             _lockroot := mload(add(_state, 288))

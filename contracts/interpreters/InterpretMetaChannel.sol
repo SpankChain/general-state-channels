@@ -120,7 +120,10 @@ contract InterpretMetaChannel is InterpreterInterface {
         require(subChannels[_channelIndex].isClose == 0);
         require(subChannels[_channelIndex].isInSettlementState == 1);
 
-        deployedInterpreter.finalizeState(subChannels[_channelIndex].state);
+        // this may not be needed since initState is called for every challenge
+        // for htlc channels, the client just needs to be sure that for any individual
+        // tx timeout, that the individual timeout is shorter than the channel timeout.
+        //deployedInterpreter.finalizeState(subChannels[_channelIndex].state);
 
         // update the meta-channel state for balance
         balanceA += deployedInterpreter.balanceA();
