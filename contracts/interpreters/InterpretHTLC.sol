@@ -21,6 +21,13 @@ contract InterpretHTLC is InterpreterInterface {
     uint256 public lockedNonce = 0;
     uint256 public sequence = 0;
     uint256 public timeout; // equal to the last timeout of locked txs
+
+    // TODO: create a mapping of states so that the balances can be updates
+    // independant of the consensus on which state hash has the final 
+    // list of all transactions.
+    // Each state presented on the root hash with a higher sequence will reset 
+    // the balances back to the initial balance and require playing out the sequence
+    // of txs to build to correct final state again.
     bytes public state;
 
     bytes32 public CTFMetaAddress;
@@ -50,18 +57,21 @@ contract InterpretHTLC is InterpreterInterface {
         return true;
     }
 
-    function isSequenceHigher(bytes _data1, bytes _data2) public pure returns (bool) {
+    function isSequenceHigher(bytes _data) public returns (bool) {
         uint isHigher1;
         uint isHigher2;
 
+        bytes memory _s = state;
+
         assembly {
-            isHigher1 := mload(add(_data1, 64))
-            isHigher2 := mload(add(_data2, 64))
+            isHigher1 := mload(add(_s, 64))
+            isHigher2 := mload(add(_data, 64))
         }
 
-        require(isHigher1 > isHigher2);
+        require(isHigher1 < isHigher2);
         return true;
     }
+
 
     // TODO: This needs to reject calls in the sub-channel is being settled. This will give both 
     // parties enough time to agree on the root hash to check transactions against. This means that the
@@ -114,11 +124,11 @@ contract InterpretHTLC is InterpreterInterface {
 
     // this needs to be permissioned to allow only calls from participants or only 
     // callable from the ctf contract pointing to it
-    function finalizeState(bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) onlyMeta returns (bool) {
+    function finalizeState(bytes _state) onlyMeta returns (bool) {
         // TODO: find best way to make this throw if the longest locked tx time hasn't elapsed
         require(now >= timeout);
-        _decodeState(_state);
-        state = _state;
+        //_decodeState(_state);
+        //state = _state;
     }
 
 
@@ -146,7 +156,17 @@ contract InterpretHTLC is InterpreterInterface {
         // State
         // [0-31] isClose flag
         // [32-63] sequence
-        // [64-95] timeout
+        // [64-95] timeout // the longest timeout on all hashlocks, this should always be
+        // shorter than the possible length of channel timeout if brought on chain.
+
+        // ie 
+        //   channel timeout = 1000 ms
+        //   tx1 timout = now + (t < 1000ms)
+        //      some time elapses, tx1's secret should be reveled within 1000ms
+        //      or its assumed to be invalid and should not update the state balances
+        //      with the locked tx amount client side
+        //   tx2 timout = now + (t < 1000ms)
+        
         // [96-127] sender
         // [128-159] receiver
         // [160-191] bond 
@@ -157,11 +177,11 @@ contract InterpretHTLC is InterpreterInterface {
         uint256 _bond;
         uint256 _balanceB;
         bytes32 _lockroot;
-        uint256 _timeout;
+        //uint256 _timeout;
         //address _meta;
 
         assembly {
-            _timeout := mload(add(_state, 96))
+            //_timeout := mload(add(_state, 96))
             _bond := mload(add(_state, 224))
             _balanceB := mload(add(_state, 256))
             _lockroot := mload(add(_state, 288))
@@ -171,7 +191,7 @@ contract InterpretHTLC is InterpreterInterface {
         balanceA = _bond;
         balanceB = _balanceB;
         lockroot = _lockroot;
-        timeout = _timeout;
+        //timeout = _timeout;
         //metaAddress = _meta;
     }
 }

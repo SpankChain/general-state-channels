@@ -7,6 +7,9 @@ import "./InterpretBidirectional.sol";
 import "./InterpretPaymentChannel.sol";
 import "./InterpretBattleChannel.sol";
 
+/// @title SpankChain Meta-channel - An interpreter designed to handle multiple state-channels
+/// @author Nathan Ginnever - <ginneversource@gmail.com>
+
 contract InterpretMetaChannel is InterpreterInterface {
     // sub-channel state
     struct SubChannel {
@@ -23,19 +26,19 @@ contract InterpretMetaChannel is InterpreterInterface {
     mapping(uint => SubChannel) subChannels;
 
     // meta-channel state
-    uint public isClose = 0; // 1: Meta Channel open 0: Channel closed
-    address public partyA;
-    address public partyB;
-    uint256 public balanceA;
+    uint public isClose = 0; // 1: Meta Channel open 1: Channel closed 0
+    address public partyA; // Address of first channel participant
+    address public partyB; // Address of second channel participant
+    uint256 public balanceA; // This should be generalized to state
     uint256 public balanceB;
-    uint public settlementPeriodLength;
-    bytes32 public stateRoot;
-    bytes public state;
+    uint public settlementPeriodLength; // How long challengers have to reply to settle engagement
+    bytes32 public stateRoot; // The merkle root of all sub-channel state
+    bytes public state; // The state read by extensions on the msig
 
     // settlement state
-    uint isInSettlementState = 0;
-    ChannelRegistry public registry;
-    uint public settlementPeriodEnd;
+    uint isInSettlementState = 0; // meta channel is in settling 1: Not settling 0
+    ChannelRegistry public registry; // Address of the CTF registry
+    uint public settlementPeriodEnd; // The time when challenges are no longer accepted after
 
     function InterpretMetaChannel(address _registry) {
         require(_registry != 0x0);
@@ -50,7 +53,7 @@ contract InterpretMetaChannel is InterpreterInterface {
         require(_hasAllSigs(_partyA, _partyB));
 
         // sub-channel state should be passed to the interpreter to decode
-        // we decode the overall state to get the agree roothash of subchannels
+        // we decode the overall state to get the agreed roothash of subchannels
         // and other actionable state like timeout
         _decodeState(_state);
         // sub-channel must be open
@@ -103,10 +106,12 @@ contract InterpretMetaChannel is InterpreterInterface {
         // consult the now deployed special channel logic to see if sequence is higher
         // figure out how decode the CTFaddress from the state
         InterpreterInterface deployedInterpreter = InterpreterInterface(registry.resolveAddress(subChannels[_channelIndex].CTFaddress));
-        require(deployedInterpreter.isSequenceHigher(subChannels[_channelIndex].state, _subchannel));
+        require(deployedInterpreter.isSequenceHigher(_subchannel));
         
+        // store the new sub-channel state in the interpreter
         deployedInterpreter.initState(_subchannel);
 
+        // extend the challenge time for the sub-channel
         subChannels[_channelIndex].settlementPeriodEnd = now + subChannels[_channelIndex].settlementPeriodLength;
         subChannels[_channelIndex].state = _subchannel;
     }
@@ -118,11 +123,15 @@ contract InterpretMetaChannel is InterpreterInterface {
 
         require(subChannels[_channelIndex].settlementPeriodEnd <= now);
         require(subChannels[_channelIndex].isClose == 0);
-        require(subChannels[_channelIndex].isInSettlementState == 1);
+        //require(subChannels[_channelIndex].isInSettlementState == 1);
 
+        // this may not be needed since initState is called for every challenge
+        // for htlc channels, the client just needs to be sure that for any individual
+        // tx timeout, that the individual timeout is shorter than the channel timeout.
         deployedInterpreter.finalizeState(subChannels[_channelIndex].state);
 
         // update the meta-channel state for balance
+        // TODO: generalize this to just STATE for the msig extension to read
         balanceA += deployedInterpreter.balanceA();
         balanceB += deployedInterpreter.balanceB();
         subChannels[_channelIndex].isClose = 1;
@@ -158,7 +167,7 @@ contract InterpretMetaChannel is InterpreterInterface {
         require(isInSettlementState == 1);
         require(settlementPeriodEnd <= now);
 
-        isSequenceHigher(_state, state);
+        isSequenceHigher(_state);
 
         settlementPeriodEnd = now + settlementPeriodLength;
         state = _state;
@@ -176,18 +185,21 @@ contract InterpretMetaChannel is InterpreterInterface {
 
     // TODO: Build SPC settlement functions
 
-    function isSequenceHigher(bytes _data1, bytes _data2) public pure returns (bool) {
+    function isSequenceHigher(bytes _data) public returns (bool) {
         uint isHigher1;
         uint isHigher2;
 
+        bytes memory _s = state;
+
         assembly {
-            isHigher1 := mload(add(_data1, 64))
-            isHigher2 := mload(add(_data2, 64))
+            isHigher1 := mload(add(_s, 64))
+            isHigher2 := mload(add(_data, 64))
         }
 
-        require(isHigher1 > isHigher2);
+        require(isHigher1 < isHigher2);
         return true;
     }
+
 
     function isClose(bytes _data) public returns(bool) {
         uint isClosed;
