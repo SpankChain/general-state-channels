@@ -21,6 +21,13 @@ contract InterpretHTLC is InterpreterInterface {
     uint256 public lockedNonce = 0;
     uint256 public sequence = 0;
     uint256 public timeout; // equal to the last timeout of locked txs
+
+    // TODO: create a mapping of states so that the balances can be updates
+    // independant of the consensus on which state hash has the final 
+    // list of all transactions.
+    // Each state presented on the root hash with a higher sequence will reset 
+    // the balances back to the initial balance and require playing out the sequence
+    // of txs to build to correct final state again.
     bytes public state;
 
     bytes32 public CTFMetaAddress;
@@ -50,18 +57,21 @@ contract InterpretHTLC is InterpreterInterface {
         return true;
     }
 
-    function isSequenceHigher(bytes _data1, bytes _data2) public pure returns (bool) {
+    function isSequenceHigher(bytes _data) public returns (bool) {
         uint isHigher1;
         uint isHigher2;
 
+        bytes memory _s = state;
+
         assembly {
-            isHigher1 := mload(add(_data1, 64))
-            isHigher2 := mload(add(_data2, 64))
+            isHigher1 := mload(add(_s, 64))
+            isHigher2 := mload(add(_data, 64))
         }
 
-        require(isHigher1 > isHigher2);
+        require(isHigher1 < isHigher2);
         return true;
     }
+
 
     // TODO: This needs to reject calls in the sub-channel is being settled. This will give both 
     // parties enough time to agree on the root hash to check transactions against. This means that the
@@ -181,7 +191,7 @@ contract InterpretHTLC is InterpreterInterface {
         balanceA = _bond;
         balanceB = _balanceB;
         lockroot = _lockroot;
-        timeout = _timeout;
+        //timeout = _timeout;
         //metaAddress = _meta;
     }
 }

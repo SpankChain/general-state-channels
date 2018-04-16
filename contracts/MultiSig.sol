@@ -7,6 +7,8 @@ import "./extensions/ExtensionInterface.sol";
 /// @title SpankChain General-State-Channel - A multisignature "wallet" for general state
 /// @author Nathan Ginnever - <ginneversource@gmail.com>
 
+// TODO: Timeout on init deposit return
+
 contract MultiSig {
 
     string public constant NAME = "General State MultiSig";
@@ -71,7 +73,7 @@ contract MultiSig {
         // check the account opening a channel signed the initial state
         address s = _getSig(_state, _v, _r, _s);
         // consider if this is required, reduces ability for 3rd party to facilitate txs 
-        require(s == msg.sender || s == tx.origin);
+        //require(s == msg.sender || s == tx.origin);
         _decodeState(_state);
         require(partyA == s);
         require(balanceA == msg.value);

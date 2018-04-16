@@ -17,7 +17,7 @@ contract InterpreterInterface {
 
     function isClose(bytes _data) public returns (bool);
 
-    function isSequenceHigher(bytes _data1, bytes _data2) public pure returns (bool);
+    function isSequenceHigher(bytes _data) public returns (bool);
 
     //function closeWithTimeoutGame(uint _gameIndex, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public;
 

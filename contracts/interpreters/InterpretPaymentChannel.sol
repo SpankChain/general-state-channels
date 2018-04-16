@@ -20,6 +20,7 @@ contract InterpretPaymentChannel is InterpreterInterface {
 
     
     bytes32 public CTFMetaAddress;
+    bytes public state;
     ChannelRegistry public registry;
 
     modifier onlyMeta() {
@@ -39,22 +40,25 @@ contract InterpretPaymentChannel is InterpreterInterface {
         return true;
     }
 
-    function isSequenceHigher(bytes _data1, bytes _data2) public pure returns (bool) {
+    function isSequenceHigher(bytes _data) public returns (bool) {
         uint isHigher1;
         uint isHigher2;
 
+        bytes memory _s = state;
+
         assembly {
-            isHigher1 := mload(add(_data1, 64))
-            isHigher2 := mload(add(_data2, 64))
+            isHigher1 := mload(add(_s, 64))
+            isHigher2 := mload(add(_data, 64))
         }
 
-        require(isHigher1 > isHigher2);
+        require(isHigher1 < isHigher2);
         return true;
     }
 
     // TODO: MODIFY
     function initState(bytes _state) onlyMeta returns (bool) {
         _decodeState(_state);
+        state = _state;
         totalBond = balanceA + balanceB;
     }
 
