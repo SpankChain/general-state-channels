@@ -3,6 +3,7 @@ pragma solidity ^0.4.18;
 import "./ChannelRegistry.sol";
 import "./interpreters/InterpreterInterface.sol";
 import "./extensions/ExtensionInterface.sol";
+import "./extensions/EtherExtension.sol";
 
 /// @title SpankChain General-State-Channel - A multisignature "wallet" for general state
 /// @author Nathan Ginnever - <ginneversource@gmail.com>
@@ -49,9 +50,9 @@ contract MultiSig {
     uint256 sequence;
     address public partyA;
     address public partyB;
-    uint256 public balanceA;
-    uint256 public balanceB;
     bytes32 interpreter;
+
+    address[4] public extensions;
 
     bytes state;
 
@@ -69,20 +70,28 @@ contract MultiSig {
     }
 
     // Consider one function with both sigs, still implies multiple transactions for funding
-    function openAgreement(bytes _state, uint8 _v, bytes32 _r, bytes32 _s) public payable {
+    function openAgreement(bytes _state, uint8 _ext, uint8 _v, bytes32 _r, bytes32 _s) public payable {
         // check the account opening a channel signed the initial state
         address s = _getSig(_state, _v, _r, _s);
         // consider if this is required, reduces ability for 3rd party to facilitate txs 
         //require(s == msg.sender || s == tx.origin);
-        _decodeState(_state);
-        require(partyA == s);
-        require(balanceA == msg.value);
-        state = _state;
 
-        bonded += msg.value;
+        if(_ext == 0) {
+            EtherExtension _eth = new EtherExtension();
+            extensions[0] = address(_eth);
+            _decodeState(_state, _ext);
+
+            require(_eth.balanceA() == msg.value);
+            require(partyA == s);
+
+            bonded += msg.value;
+        }
+
+
+        state = _state;
     }
 
-    function joinAgreement(uint8 _v, bytes32 _r, bytes32 _s) public payable {
+    function joinAgreement(uint8 _ext, uint8 _v, bytes32 _r, bytes32 _s) public payable {
         // require the channel is not open yet
         require(isOpen == false);
 
@@ -90,19 +99,29 @@ contract MultiSig {
         address _joiningParty = _getSig(state, _v, _r, _s);
 
         require(_joiningParty == partyB);
-        require(balanceB == msg.value);
-
-        bonded += msg.value;
+        
+        if(_ext == 0) { 
+             EtherExtension _eth = EtherExtension(extensions[_ext]);
+             require(_eth.balanceB() == msg.value);
+             bonded += msg.value;
+        }
 
         isOpen = true;
     }
 
     // TODO this is currently limited to monetary state
-    function updateAgreement() payable {
-        require(msg.sender == partyA || msg.sender == partyB);
-        if(msg.sender == partyA) { balanceA+= msg.value; }
-        if(msg.sender == partyB) { balanceB+= msg.value; }
-        bonded += msg.value;
+    function updateAgreement(bytes _state, uint8 _ext, uint8[2] sigV, bytes32[2] sigR, bytes32[2] sigS) payable {
+        address _partyA = _getSig(_state, sigV[0], sigR[0], sigS[0]);
+        address _partyB = _getSig(_state, sigV[1], sigR[1], sigS[1]);
+
+        if(_ext == 0) {
+            EtherExtension _eth = EtherExtension(extensions[_ext]);
+            _eth.setState(_state);
+            bonded += msg.value;
+            require(_eth.total() == bonded);
+        }
+
+        state = _state;
     }
 
     // TODO allow executing subchannel state. this will allow an on-chain sub-channel close
@@ -116,19 +135,19 @@ contract MultiSig {
     // needs to have settlement process to close the final balance
     // or just check that the meta channel has closed on a settle process
     // this allows the spc to checkpoint state
-    function closeAgreementWithTimeout(bytes _state) public {
+    function closeAgreementWithTimeout(bytes _state, uint8 _ext) public {
         InterpreterInterface deployedInterpreter = InterpreterInterface(registry.resolveAddress(interpreter));
 
         require(deployedInterpreter.isClosed() == 1);
 
         require(keccak256(_state) == deployedInterpreter.statehash());
 
-        _finalize(_state);
+        _finalize(_state, _ext);
         isOpen = false;
     }
 
 
-    function closeAgreement(bytes _state, uint8[2] sigV, bytes32[2] sigR, bytes32[2] sigS) public {
+    function closeAgreement(bytes _state, uint8 _ext, uint8[2] sigV, bytes32[2] sigR, bytes32[2] sigS) public {
 
         address _partyA = _getSig(_state, sigV[0], sigR[0], sigS[0]);
         address _partyB = _getSig(_state, sigV[1], sigR[1], sigS[1]);
@@ -137,7 +156,7 @@ contract MultiSig {
 
         require(_hasAllSigs(_partyA, _partyB));
 
-        _finalize(_state);
+        _finalize(_state, _ext);
         isOpen = false;
     }
 
@@ -149,11 +168,15 @@ contract MultiSig {
     // no force pushing of state here due to state transitions resulting in value transfer
     // it is conceivable that you could force an advantageous final state and ddos your counterparty
     // this currently works with ether only. It should take a list of extenstions that need to be called
-    function _finalize(bytes _state) internal {
-        _decodeState(_state);
-        require(balanceA + balanceB == bonded);
-        partyA.transfer(balanceA);
-        partyB.transfer(balanceB);
+    function _finalize(bytes _state, uint8 _ext) internal {
+        _decodeState(_state, _ext);
+
+        if(_ext == 0) {
+            EtherExtension _eth = EtherExtension(extensions[_ext]);
+            require(_eth.total() == bonded);
+            partyA.transfer(_eth.balanceA());
+            partyB.transfer(_eth.balanceB());
+        }
     }
 
     function _hasAllSigs(address _a, address _b) internal view returns (bool) {
@@ -177,23 +200,26 @@ contract MultiSig {
     // upon state happens in the extension.
     // In the case of CKBA the extension will be the arena contract. The arena will read
     // the final state and update the global ledger of cat stats upon exit
-    function _decodeState(bytes _state) internal {
+    function _decodeState(bytes _state, uint8 _ext) internal {
+
         uint256 total;
         address _addressA;
         address _addressB;
-        uint256 _balanceA;
-        uint256 _balanceB;
 
         assembly {
             _addressA := mload(add(_state, 96))
             _addressB := mload(add(_state, 128))
-            _balanceA := mload(add(_state, 160))
-            _balanceB := mload(add(_state, 192))
         }
 
-        total = _balanceA + _balanceB;
-        balanceA = _balanceA;
-        balanceB = _balanceB;
+        if(_ext == 0) {
+            EtherExtension _eth = EtherExtension(extensions[_ext]);
+            _eth.setState(_state);
+        }
+
+        if(_ext == 1) {
+
+        }
+
         partyA = _addressA;
         partyB = _addressB;
     }
