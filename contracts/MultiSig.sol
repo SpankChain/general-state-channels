@@ -45,13 +45,14 @@ contract MultiSig {
     //    FighterStatsA
     //    FighterStatsB
 
-    // Decoder modules act on final state agreements from the sub-channel outcomes
+    // Extension modules act on final state agreements from the sub-channel outcomes
 
-    uint256 sequence;
     address public partyA;
     address public partyB;
+    uint256 sequence;
     bytes32 interpreter;
 
+    // [Ether, ERC20, ERC721, CKBA]
     address[4] public extensions;
 
     bytes state;
@@ -73,21 +74,21 @@ contract MultiSig {
     function openAgreement(bytes _state, uint8 _ext, uint8 _v, bytes32 _r, bytes32 _s) public payable {
         // check the account opening a channel signed the initial state
         address s = _getSig(_state, _v, _r, _s);
-        // consider if this is required, reduces ability for 3rd party to facilitate txs 
-        //require(s == msg.sender || s == tx.origin);
 
         if(_ext == 0) {
             EtherExtension _eth = new EtherExtension();
             extensions[0] = address(_eth);
-            _decodeState(_state, _ext);
+            _eth.setState(_state);
 
             require(_eth.balanceA() == msg.value);
-            require(partyA == s);
+            require(_eth.partyA() == s);
 
             bonded += msg.value;
         }
 
+        if(_ext == 1) {}
 
+        partyA = s;
         state = _state;
     }
 
@@ -97,15 +98,18 @@ contract MultiSig {
 
         // check that the state is signed by the sender and sender is in the state
         address _joiningParty = _getSig(state, _v, _r, _s);
-
-        require(_joiningParty == partyB);
         
         if(_ext == 0) { 
              EtherExtension _eth = EtherExtension(extensions[_ext]);
+             require(_joiningParty ==_eth.partyB());
              require(_eth.balanceB() == msg.value);
              bonded += msg.value;
+             require(_eth.total() == bonded);
         }
 
+        if(_ext == 1) {}
+
+        partyB = _joiningParty;
         isOpen = true;
     }
 
@@ -115,11 +119,21 @@ contract MultiSig {
         address _partyB = _getSig(_state, sigV[1], sigR[1], sigS[1]);
 
         if(_ext == 0) {
-            EtherExtension _eth = EtherExtension(extensions[_ext]);
+          EtherExtension _eth;
+            // If ether has already been deposited when opening, use the same extension          
+            if(extensions[_ext] != address(0x0)) {
+                _eth = EtherExtension(extensions[_ext]);
+            } else {
+                _eth = new EtherExtension();
+                extensions[0] = address(_eth);
+            }
+
             _eth.setState(_state);
             bonded += msg.value;
             require(_eth.total() == bonded);
         }
+
+        if(_ext == 1) {}
 
         state = _state;
     }
@@ -169,14 +183,16 @@ contract MultiSig {
     // it is conceivable that you could force an advantageous final state and ddos your counterparty
     // this currently works with ether only. It should take a list of extenstions that need to be called
     function _finalize(bytes _state, uint8 _ext) internal {
-        _decodeState(_state, _ext);
 
         if(_ext == 0) {
             EtherExtension _eth = EtherExtension(extensions[_ext]);
+            _eth.setState(_state);
             require(_eth.total() == bonded);
             partyA.transfer(_eth.balanceA());
             partyB.transfer(_eth.balanceB());
         }
+        
+        if(_ext == 1) {}
     }
 
     function _hasAllSigs(address _a, address _b) internal view returns (bool) {
@@ -194,34 +210,6 @@ contract MultiSig {
 
         require(isClosed == 1);
         return true;
-    }
-
-    // TODO: for extensions, we can move this to the extension so that state decoding and acting
-    // upon state happens in the extension.
-    // In the case of CKBA the extension will be the arena contract. The arena will read
-    // the final state and update the global ledger of cat stats upon exit
-    function _decodeState(bytes _state, uint8 _ext) internal {
-
-        uint256 total;
-        address _addressA;
-        address _addressB;
-
-        assembly {
-            _addressA := mload(add(_state, 96))
-            _addressB := mload(add(_state, 128))
-        }
-
-        if(_ext == 0) {
-            EtherExtension _eth = EtherExtension(extensions[_ext]);
-            _eth.setState(_state);
-        }
-
-        if(_ext == 1) {
-
-        }
-
-        partyA = _addressA;
-        partyB = _addressB;
     }
 
     function _getSig(bytes _d, uint8 _v, bytes32 _r, bytes32 _s) internal pure returns(address) {

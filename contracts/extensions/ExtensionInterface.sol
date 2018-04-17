@@ -8,5 +8,5 @@ contract ExtensionInterface {
       return extension;
     }
 
-
+    function setState() {}
 }
