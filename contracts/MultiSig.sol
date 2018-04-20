@@ -2,8 +2,7 @@ pragma solidity ^0.4.18;
 
 import "./ChannelRegistry.sol";
 import "./interpreters/InterpreterInterface.sol";
-import "./extensions/ExtensionInterface.sol";
-import "./extensions/EtherExtension.sol";
+import "./lib/extensions/EtherExtension.sol";
 
 /// @title SpankChain General-State-Channel - A multisignature "wallet" for general state
 /// @author Nathan Ginnever - <ginneversource@gmail.com>
@@ -11,6 +10,7 @@ import "./extensions/EtherExtension.sol";
 // TODO: Timeout on init deposit return
 
 contract MultiSig {
+    //using EtherExtension for EtherExtension;
 
     string public constant NAME = "General State MultiSig";
     string public constant VERSION = "0.0.1";
@@ -50,46 +50,52 @@ contract MultiSig {
     address public partyA;
     address public partyB;
     uint256 sequence;
-    bytes32 interpreter;
+    bytes32 interpreter; // Counterfactual address of metachannel interpreter
 
     // [Ether, ERC20, ERC721, CKBA]
-    address[4] public extensions;
+    address[] public extensions;
 
-    bytes state;
+    bytes public state;
 
     uint256 bonded;
-    bool isOpen = false;
+
+    bool isOpen = false; // true when both parties have joined
 
     event ChannelCreated(bytes32 channelId, address indexed initiator);
     event ChannelJoined(bytes32 channelId, address indexed joiningParty);
 
-    function MultiSig(bytes32 _interpreter, address _registry) {
+    function MultiSig(bytes32 _interpreter, address _registry, address[] _exts) {
         require(_interpreter != 0x0);
         require(_registry != 0x0);
         interpreter = _interpreter;
         registry = ChannelRegistry(_registry);
+        for (uint8 i=0; i<_exts.length; i++) {
+            //require(_exts[i] !=0x0);
+            extensions[i] = _exts[i];
+        }
     }
 
     // Consider one function with both sigs, still implies multiple transactions for funding
     function openAgreement(bytes _state, uint8 _ext, uint8 _v, bytes32 _r, bytes32 _s) public payable {
+         // require the channel is not open yet
+        require(isOpen == false);
+
         // check the account opening a channel signed the initial state
-        address s = _getSig(_state, _v, _r, _s);
+        address _initiator = _getSig(_state, _v, _r, _s);
+        state = _state;
 
         if(_ext == 0) {
-            EtherExtension _eth = new EtherExtension();
-            extensions[0] = address(_eth);
-            _eth.setState(_state);
+            //EtherExtension _eth = EtherExtension(extensions[0]);
 
-            require(_eth.balanceA() == msg.value);
-            require(_eth.partyA() == s);
+            require(EtherExtension.getBalanceA(state) == msg.value);
+            require(EtherExtension.getPartyA(state) == _initiator);
 
             bonded += msg.value;
         }
 
         if(_ext == 1) {}
 
-        partyA = s;
-        state = _state;
+        partyA = _initiator;
     }
 
     function joinAgreement(uint8 _ext, uint8 _v, bytes32 _r, bytes32 _s) public payable {
@@ -100,16 +106,17 @@ contract MultiSig {
         address _joiningParty = _getSig(state, _v, _r, _s);
         
         if(_ext == 0) { 
-             EtherExtension _eth = EtherExtension(extensions[_ext]);
-             require(_joiningParty ==_eth.partyB());
-             require(_eth.balanceB() == msg.value);
+             //EtherExtension _eth = EtherExtension(extensions[0]);
+             require(EtherExtension.getPartyB(state) == _joiningParty);
+             require(EtherExtension.getBalanceB(state) == msg.value);
              bonded += msg.value;
-             require(_eth.total() == bonded);
+             require(EtherExtension.getTotal(state) == bonded);
         }
 
         if(_ext == 1) {}
 
         partyB = _joiningParty;
+        // no longer allow joining functions to be called
         isOpen = true;
     }
 
@@ -118,24 +125,27 @@ contract MultiSig {
         address _partyA = _getSig(_state, sigV[0], sigR[0], sigS[0]);
         address _partyB = _getSig(_state, sigV[1], sigR[1], sigS[1]);
 
-        if(_ext == 0) {
-          EtherExtension _eth;
-            // If ether has already been deposited when opening, use the same extension          
-            if(extensions[_ext] != address(0x0)) {
-                _eth = EtherExtension(extensions[_ext]);
-            } else {
-                _eth = new EtherExtension();
-                extensions[0] = address(_eth);
-            }
+        require(_hasAllSigs(_partyA, _partyB));
 
-            _eth.setState(_state);
+        state = _state;
+
+        if(_ext == 0) {
+            //EtherExtension _eth = EtherExtension(extensions[0]);
+
+            uint256 _balA = EtherExtension.getBalanceA(state);
+            uint256 _balB = EtherExtension.getBalanceB(state);
+            uint256 _total = EtherExtension.getTotal(state);
+
+            address _a = EtherExtension.getPartyA(state);
+            address _b = EtherExtension.getPartyB(state);
+            require(_a == partyA && _b == partyB);
+
             bonded += msg.value;
-            require(_eth.total() == bonded);
+            require(_total == bonded);
         }
 
         if(_ext == 1) {}
 
-        state = _state;
     }
 
     // TODO allow executing subchannel state. this will allow an on-chain sub-channel close
@@ -155,8 +165,9 @@ contract MultiSig {
         require(deployedInterpreter.isClosed() == 1);
 
         require(keccak256(_state) == deployedInterpreter.statehash());
+        state = _state;
 
-        _finalize(_state, _ext);
+        _finalize(_ext);
         isOpen = false;
     }
 
@@ -167,10 +178,10 @@ contract MultiSig {
         address _partyB = _getSig(_state, sigV[1], sigR[1], sigS[1]);
 
         require(_isClose(_state));
-
         require(_hasAllSigs(_partyA, _partyB));
+        state = _state;
 
-        _finalize(_state, _ext);
+        _finalize(_ext);
         isOpen = false;
     }
 
@@ -182,14 +193,13 @@ contract MultiSig {
     // no force pushing of state here due to state transitions resulting in value transfer
     // it is conceivable that you could force an advantageous final state and ddos your counterparty
     // this currently works with ether only. It should take a list of extenstions that need to be called
-    function _finalize(bytes _state, uint8 _ext) internal {
+    function _finalize(uint8 _ext) internal {
 
         if(_ext == 0) {
-            EtherExtension _eth = EtherExtension(extensions[_ext]);
-            _eth.setState(_state);
-            require(_eth.total() == bonded);
-            partyA.transfer(_eth.balanceA());
-            partyB.transfer(_eth.balanceB());
+            //EtherExtension _eth = EtherExtension(extensions[0]);
+            require(EtherExtension.getTotal(state) == bonded);
+            partyA.transfer(EtherExtension.getBalanceA(state));
+            partyB.transfer(EtherExtension.getBalanceB(state));
         }
         
         if(_ext == 1) {}
@@ -211,6 +221,10 @@ contract MultiSig {
         require(isClosed == 1);
         return true;
     }
+
+    // function _getExtensionInst(uint8 _ext) internal pure returns(EtherExtension) {
+    //     return EtherExtension(extensions[_ext]);
+    // }
 
     function _getSig(bytes _d, uint8 _v, bytes32 _r, bytes32 _s) internal pure returns(address) {
         bytes memory prefix = "\x19Ethereum Signed Message:\n32";

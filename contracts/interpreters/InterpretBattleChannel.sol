@@ -62,8 +62,6 @@ contract InterpretBattleChannel is InterpreterInterface {
     bytes32 public CTFMetaAddress;
     ChannelRegistry public registry;
 
-    bytes public state;
-
     modifier onlyMeta() {
         require(msg.sender == registry.resolveAddress(CTFMetaAddress));
         _;

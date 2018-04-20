@@ -28,7 +28,6 @@ contract InterpretHTLC is InterpreterInterface {
     // Each state presented on the root hash with a higher sequence will reset 
     // the balances back to the initial balance and require playing out the sequence
     // of txs to build to correct final state again.
-    bytes public state;
 
     bytes32 public CTFMetaAddress;
     ChannelRegistry public registry;

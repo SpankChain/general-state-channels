@@ -20,7 +20,6 @@ contract InterpretPaymentChannel is InterpreterInterface {
 
     
     bytes32 public CTFMetaAddress;
-    bytes public state;
     ChannelRegistry public registry;
 
     modifier onlyMeta() {

@@ -4,8 +4,9 @@ contract InterpreterInterface {
     bool public interpreter = true;
     uint256 public balanceA;
     uint256 public balanceB;
-    uint public isClosed;
+    uint public isClosed = 0; // 1: Channel open 1: Channel closed 0
     bytes32 public statehash;
+    bytes public state; // The state read by extensions on the msig
 
     /// @dev simply a boolean to indicate this is the contract we expect to be
     function isInterpreter() public view returns (bool){

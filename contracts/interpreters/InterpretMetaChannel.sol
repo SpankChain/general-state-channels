@@ -13,27 +13,25 @@ import "./InterpretBattleChannel.sol";
 contract InterpretMetaChannel is InterpreterInterface {
     // sub-channel state
     struct SubChannel {
-        uint isClose;
-        uint isInSettlementState;
-        uint sequence;
+        uint isSubClose;
+        uint isSubInSettlementState;
+        uint subSequence;
         address[2] participants;
         bytes32 CTFaddress;
-        uint settlementPeriodLength;
-        uint settlementPeriodEnd;
-        bytes state;
+        uint subSettlementPeriodLength;
+        uint subSettlementPeriodEnd;
+        bytes subState;
     }
 
     mapping(uint => SubChannel) subChannels;
 
     // meta-channel state
-    uint public isClose = 0; // 1: Meta Channel open 1: Channel closed 0
     address public partyA; // Address of first channel participant
     address public partyB; // Address of second channel participant
     uint256 public balanceA; // This should be generalized to state
     uint256 public balanceB;
     uint public settlementPeriodLength; // How long challengers have to reply to settle engagement
     bytes32 public stateRoot; // The merkle root of all sub-channel state
-    bytes public state; // The state read by extensions on the msig
 
     // settlement state
     uint isInSettlementState = 0; // meta channel is in settling 1: Not settling 0
@@ -57,10 +55,10 @@ contract InterpretMetaChannel is InterpreterInterface {
         // and other actionable state like timeout
         _decodeState(_state);
         // sub-channel must be open
-        require(subChannels[_channelIndex].isClose == 0);
+        require(subChannels[_channelIndex].isSubClose == 0);
         // sub-channel must not already be in a settle state, this should
         // only be called once to initiate settlement period
-        require(subChannels[_channelIndex].isInSettlementState == 0);
+        require(subChannels[_channelIndex].isSubInSettlementState == 0);
 
         bytes32 _stateHash = keccak256(_subchannel);
         // do proof of inclusing in of sub-channel state in root state
@@ -72,9 +70,9 @@ contract InterpretMetaChannel is InterpreterInterface {
         // consider running some logic on the state from the interpreter to validate 
         // the new state obeys transition rules
 
-        subChannels[_channelIndex].isInSettlementState = 1;
-        subChannels[_channelIndex].settlementPeriodEnd = now + subChannels[_channelIndex].settlementPeriodLength;
-        subChannels[_channelIndex].state = _subchannel;
+        subChannels[_channelIndex].isSubInSettlementState = 1;
+        subChannels[_channelIndex].subSettlementPeriodEnd = now + subChannels[_channelIndex].subSettlementPeriodLength;
+        subChannels[_channelIndex].subState = _subchannel;
     }
 
     // No need for a consensus close on the SPC since it is only instantiated in 
@@ -97,8 +95,8 @@ contract InterpretMetaChannel is InterpreterInterface {
         // get roothash
         _decodeState(_state);
 
-        require(subChannels[_channelIndex].isInSettlementState == 1);
-        require(subChannels[_channelIndex].settlementPeriodEnd <= now);
+        require(subChannels[_channelIndex].isSubInSettlementState == 1);
+        require(subChannels[_channelIndex].subSettlementPeriodEnd <= now);
 
         bytes32 _stateHash = keccak256(_subchannel);
         require(_isContained(_stateHash, _proof));
@@ -112,8 +110,8 @@ contract InterpretMetaChannel is InterpreterInterface {
         deployedInterpreter.initState(_subchannel);
 
         // extend the challenge time for the sub-channel
-        subChannels[_channelIndex].settlementPeriodEnd = now + subChannels[_channelIndex].settlementPeriodLength;
-        subChannels[_channelIndex].state = _subchannel;
+        subChannels[_channelIndex].subSettlementPeriodEnd = now + subChannels[_channelIndex].subSettlementPeriodLength;
+        subChannels[_channelIndex].subState = _subchannel;
     }
 
     // in the case of HTLC sub-channels, this must be called after the subchannel interpreter
@@ -121,20 +119,20 @@ contract InterpretMetaChannel is InterpreterInterface {
     function closeWithTimeoutSubchannel(uint _channelIndex) public {
         InterpreterInterface deployedInterpreter = InterpreterInterface(registry.resolveAddress(subChannels[_channelIndex].CTFaddress));
 
-        require(subChannels[_channelIndex].settlementPeriodEnd <= now);
-        require(subChannels[_channelIndex].isClose == 0);
+        require(subChannels[_channelIndex].subSettlementPeriodEnd <= now);
+        require(subChannels[_channelIndex].isSubClose == 0);
         //require(subChannels[_channelIndex].isInSettlementState == 1);
 
         // this may not be needed since initState is called for every challenge
         // for htlc channels, the client just needs to be sure that for any individual
         // tx timeout, that the individual timeout is shorter than the channel timeout.
-        deployedInterpreter.finalizeState(subChannels[_channelIndex].state);
+        deployedInterpreter.finalizeState(subChannels[_channelIndex].subState);
 
         // update the meta-channel state for balance
         // TODO: generalize this to just STATE for the msig extension to read
         balanceA += deployedInterpreter.balanceA();
         balanceB += deployedInterpreter.balanceB();
-        subChannels[_channelIndex].isClose = 1;
+        subChannels[_channelIndex].isSubClose = 1;
     }
 
     /// --- Close Meta Channel Functions
@@ -147,7 +145,7 @@ contract InterpretMetaChannel is InterpreterInterface {
 
         _decodeState(_state);
 
-        require(isClose == 0);
+        require(isClosed == 0);
         require(isInSettlementState == 0);
 
         state = _state;
@@ -175,12 +173,12 @@ contract InterpretMetaChannel is InterpreterInterface {
 
     function closeWithTimeout() public {
         require(settlementPeriodEnd <= now);
-        require(isClose == 0);
+        require(isClosed == 0);
         require(isInSettlementState == 1);
 
         _decodeState(state);
         statehash = keccak256(state);
-        isClose = 1;
+        isClosed = 1;
     }
 
     // TODO: Build SPC settlement functions
@@ -202,13 +200,13 @@ contract InterpretMetaChannel is InterpreterInterface {
 
 
     function isClose(bytes _data) public returns(bool) {
-        uint isClosed;
+        uint _isClosed;
 
         assembly {
-            isClosed := mload(add(_data, 32))
+            _isClosed := mload(add(_data, 32))
         }
 
-        require(isClosed == 1);
+        require(_isClosed == 1);
         return true;
     }
 
@@ -291,30 +289,30 @@ contract InterpretMetaChannel is InterpreterInterface {
         view
         returns
     (
-        uint isClose,
-        uint isInSettlementState,
+        uint isSubClose,
+        uint isSubInSettlementState,
         //uint numParties,
-        uint sequence,
+        uint subSequence,
         // uint intType,
         address[2] participants,
-        bytes32 CTFaddress,
-        uint settlementPeriodLength,
-        uint settlementPeriodEnd,
-        bytes state
+        bytes32 subCTFaddress,
+        uint subSettlementPeriodLength,
+        uint subSettlementPeriodEnd,
+        bytes subState
     ) {
         SubChannel storage g = subChannels[_channelIndex];
 
         return (
-            g.isClose,
-            g.isInSettlementState,
+            g.isSubClose,
+            g.isSubInSettlementState,
             //g.numParties,
-            g.sequence,
+            g.subSequence,
             // g.intType,
             g.participants,
             g.CTFaddress,
-            g.settlementPeriodLength,
-            g.settlementPeriodEnd,
-            g.state
+            g.subSettlementPeriodLength,
+            g.subSettlementPeriodEnd,
+            g.subState
         );
     }
 }
