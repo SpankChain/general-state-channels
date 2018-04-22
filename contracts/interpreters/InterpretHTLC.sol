@@ -17,6 +17,8 @@ contract InterpretHTLC is InterpreterInterface {
     // [288-319] metachannelAddress
 
     uint256 totalBond = 0;
+    uint256 public balanceA;
+    uint256 public balanceB;
     bytes32 public lockroot;
     uint256 public lockedNonce = 0;
     uint256 public sequence = 0;
@@ -96,6 +98,13 @@ contract InterpretHTLC is InterpreterInterface {
         // redeem case
         require(keccak256(_secret) == _hash);
         // assume one direction payment channel
+        // TODO: Make a balances array that maps the index of the array to the sequence
+        // number of the subchannel state holding the lockroot, this way balances will revert
+        // and build upon the checkpointed state, resetting if a higher sequence agreement is 
+        // presented. NOYE this is okay since the challenge function in the meta channel
+        // calls initState again with the updated agreed balances before lockroot apply.
+        // thus the balances state here would get reset if a challenge updates with a higher
+        // subchannel sequence
         balanceB+=_amount;
         balanceA-=_amount;
 

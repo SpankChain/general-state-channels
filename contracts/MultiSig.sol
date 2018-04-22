@@ -1,7 +1,7 @@
 pragma solidity ^0.4.18;
 
 import "./ChannelRegistry.sol";
-import "./interpreters/InterpreterInterface.sol";
+import "./MetaChannel.sol";
 import "./lib/extensions/EtherExtension.sol";
 
 /// @title SpankChain General-State-Channel - A multisignature "wallet" for general state
@@ -24,44 +24,57 @@ contract MultiSig {
     //    128 address 2
     //    160 Meta Channel CTF address
     //    192 Sub-Channel Root Hash
-    //    225+ General State
+    //    225 General State Sector Root Hash
 
-    // General State - Extensions must be able to handle these format
-    // Ether Balances
+    // General State Sectors - Extensions must be able to handle these format
+    // Sectors represent the final state of channels.
+
+    // Ether Balances - Sector type [0]
     //    EthBalanceA
     //    EthBalanceB
     //
-    // Token Balances
+    // Token Balances - Sector type [1]
+    //    Token Address
     //    ERC20BalanceA
     //    ERC20BalanceB
     //
-    // "Non-fungile" Objects
+    // "Non-fungile" Objects - Sector type [2]
     //    Num721Objects
     //    721TokenID
     //    ...
     //
-    // Battle Arena Fighter State
-    //    Battle Arena State
-    //    FighterStatsA
-    //    FighterStatsB
+    // Battle Arena Fighter State - Sector type [3]
+    //    wagerEthBalanceA - top level balance in Ether, may be 0
+    //    wagerEthBalanceB
+    //    wagerTokenAddress
+    //    wagerTokenBalA
+    //    wagerTokenBalB
+
+    //    numFightersA - Start battle profile for A
+    //    FighterStatsA1 - Record owner of cat here, make final agreements based on battles
+    //    FighterStatsA2
+    //    ...
+
+    //    numFightersB - Start battle profile for B
+    //    FighterStatsB1
+    //    FighterStatsB2
+    //    ...
 
     // Extension modules act on final state agreements from the sub-channel outcomes
 
     address public partyA;
     address public partyB;
-    uint256 sequence;
-    bytes32 interpreter; // Counterfactual address of metachannel interpreter
+    bytes32 metachannel; // Counterfactual address of metachannel
     bool[4] public extensionUsed; // ['ether', 'erc20', 'erc721'.  'ckba']
-    bytes public state;
 
     uint256 bonded;
 
     bool isOpen = false; // true when both parties have joined
 
-    function MultiSig(bytes32 _interpreter, address _registry) {
-        require(_interpreter != 0x0);
+    function MultiSig(bytes32 _metachannel, address _registry) {
+        require(_metachannel != 0x0);
         require(_registry != 0x0);
-        interpreter = _interpreter;
+        metachannel = _metachannel;
         registry = ChannelRegistry(_registry);
     }
 
@@ -92,28 +105,28 @@ contract MultiSig {
 
         // CKBA Stats opening deposit
         if(_ext == 3) {}  
-
+        
         // Set storage for state
-        state = _state;
+        //state = _state;
         partyA = _initiator;
     }
 
-    function joinAgreement(uint8 _ext, uint8 _v, bytes32 _r, bytes32 _s) public payable {
+    function joinAgreement(bytes _state, uint8 _ext, uint8 _v, bytes32 _r, bytes32 _s) public payable {
         // require the channel is not open yet
         require(isOpen == false);
 
         // check that the state is signed by the sender and sender is in the state
-        address _joiningParty = _getSig(state, _v, _r, _s);
+        address _joiningParty = _getSig(_state, _v, _r, _s);
         
         // Ether joining deposit
         if(_ext == 0) {
             // ensure the amount sent to join channel matches the signed state balance
-            require(EtherExtension.getPartyB(state) == _joiningParty);
+            require(EtherExtension.getPartyB(_state) == _joiningParty);
             // ensure the sender of funds is partyA.. not sure if this is a hard require
-            require(EtherExtension.getBalanceB(state) == msg.value);
+            require(EtherExtension.getBalanceB(_state) == msg.value);
             bonded += msg.value;
             // Require bonded is the sum of balances in state
-            require(EtherExtension.getTotal(state) == bonded);
+            require(EtherExtension.getTotal(_state) == bonded);
         }
 
         // ERC20 Token joining deposit
@@ -164,12 +177,12 @@ contract MultiSig {
         if(_ext == 3) {}  
 
         // Set storage for state
-        state = _state;
+        //state = _state;
     }
 
     // TODO allow executing subchannel state. this will allow an on-chain sub-channel close
     // and removal of assets from the channel without closing and removing everything
-    function executeState() {
+    function executeStateSector() {
         // this might require an executable flag on the state like the isClose sentinel.
         // this flag would represent an agreement to execute the given state
         // this state should reflect the current state of the metachannel, which in cases
@@ -180,14 +193,14 @@ contract MultiSig {
     // or just check that the meta channel has closed on a settle process
     // this allows the spc to checkpoint state
     function closeAgreementWithTimeout(bytes _state) public {
-        InterpreterInterface deployedInterpreter = InterpreterInterface(registry.resolveAddress(interpreter));
+        MetaChannel deployedMetaChannel = MetaChannel(registry.resolveAddress(metachannel));
 
-        require(deployedInterpreter.isClosed() == 1);
+        require(deployedMetaChannel.isClosed() == 1);
 
-        require(keccak256(_state) == deployedInterpreter.statehash());
-        state = _state;
+        require(keccak256(_state) == deployedMetaChannel.statehash());
+        //state = _state;
 
-        _finalize();
+        //_finalize();
         isOpen = false;
     }
 
@@ -199,10 +212,19 @@ contract MultiSig {
 
         require(_isClose(_state));
         require(_hasAllSigs(_partyA, _partyB));
-        state = _state;
 
-        _finalize();
+        //_finalize();
         isOpen = false;
+    }
+
+    function finalizeSector(bytes _sectorState) public {
+        // This may only be called 
+        require(isOpen == false);
+
+        // check to see if sector is contained in sector root hash
+
+        // get extension type for sector
+
     }
 
 
@@ -214,9 +236,7 @@ contract MultiSig {
     // it is conceivable that you could force an advantageous final state and ddos your counterparty
     // this currently works with ether only. It should take a list of extenstions that need to be called
     function _finalize() internal {
-
         if(extensionUsed[0] == true) {
-            //EtherExtension _eth = EtherExtension(extensions[0]);
             require(EtherExtension.getTotal(state) == bonded);
             partyA.transfer(EtherExtension.getBalanceA(state));
             partyB.transfer(EtherExtension.getBalanceB(state));
@@ -241,10 +261,6 @@ contract MultiSig {
         require(isClosed == 1);
         return true;
     }
-
-    // function _getExtensionInst(uint8 _ext) internal pure returns(EtherExtension) {
-    //     return EtherExtension(extensions[_ext]);
-    // }
 
     function _getSig(bytes _d, uint8 _v, bytes32 _r, bytes32 _s) internal pure returns(address) {
         bytes memory prefix = "\x19Ethereum Signed Message:\n32";

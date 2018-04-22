@@ -17,6 +17,8 @@ contract InterpretPaymentChannel is InterpreterInterface {
     // }
 
     uint256 public totalBond = 0;
+    uint256 public balanceA;
+    uint256 public balanceB;
 
     
     bytes32 public CTFMetaAddress;

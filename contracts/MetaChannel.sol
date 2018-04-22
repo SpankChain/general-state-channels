@@ -1,13 +1,13 @@
 
 pragma solidity ^0.4.18;
 
-import "../ChannelRegistry.sol";
-import "./InterpreterInterface.sol";
+import "./ChannelRegistry.sol";
+import "./lib/interpreters/LibBidirectional.sol";
 
 /// @title SpankChain Meta-channel - An interpreter designed to handle multiple state-channels
 /// @author Nathan Ginnever - <ginneversource@gmail.com>
 
-contract InterpretMetaChannel is InterpreterInterface {
+contract MetaChannel {
     // sub-channel state
     struct SubChannel {
         uint isSubClose;
@@ -27,6 +27,7 @@ contract InterpretMetaChannel is InterpreterInterface {
     address public partyB; // Address of second channel participant
     uint public settlementPeriodLength; // How long challengers have to reply to settle engagement
     bytes32 public stateRoot; // The merkle root of all sub-channel state
+    bytes public state;
 
     // settlement state
     uint isInSettlementState = 0; // meta channel is in settling 1: Not settling 0
@@ -237,7 +238,7 @@ contract InterpretMetaChannel is InterpreterInterface {
     }
 
     function _decodeState(bytes _state) internal {
-        // SPC State
+        // MetaChannel State
         // [
         //    32 isClose
         //    64 sequence

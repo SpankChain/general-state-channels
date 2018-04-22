@@ -1,9 +1,8 @@
 pragma solidity ^0.4.18;
 
-import "./InterpreterInterface.sol";
 import "../ChannelRegistry.sol";
 
-contract InterpretBidirectional is InterpreterInterface {
+Library LibBidirectional {
     // State
     // [0-31] isClose flag
     // [32-63] address sender
@@ -11,25 +10,6 @@ contract InterpretBidirectional is InterpreterInterface {
     // [96-127] bond 
     // [128-159] balance of receiver
 
-    uint256 totalBond = 0;
-    uint256 public balanceA;
-    uint256 public balanceB;
-    // This always returns true since the receiver should only
-    // sign and close the highest balance they have
-
-    
-    bytes32 public CTFMetaAddress;
-    ChannelRegistry public registry;
-
-    modifier onlyMeta() {
-        require(msg.sender == registry.resolveAddress(CTFMetaAddress));
-        _;
-    }
-
-    function InterpretBidirectional(bytes32 _CTFMetaAddress, address _registry) {
-        CTFMetaAddress = _CTFMetaAddress;
-        registry = ChannelRegistry(_registry);
-    }
 
     function isClose(bytes _data) public returns(bool) {
         return true;
