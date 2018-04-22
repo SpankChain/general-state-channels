@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.23;
 
 import "./ChannelRegistry.sol";
 import "./MetaChannel.sol";
@@ -25,6 +25,14 @@ contract MultiSig {
     //    160 Meta Channel CTF address
     //    192 Sub-Channel Root Hash
     //    225 General State Sector Root Hash
+
+    // Sub-channel state
+    //    32 isClose - Cooperative close flag
+    //    64 sequence
+    //    96 extensionType - What top level state this channel settles to
+    //    128 address 1
+    //    160 address 2
+    //    192+ general state
 
     // General State Sectors - Extensions must be able to handle these format
     // Sectors represent the final state of channels.
@@ -72,15 +80,15 @@ contract MultiSig {
     bool isOpen = false; // true when both parties have joined
 
     function MultiSig(bytes32 _metachannel, address _registry) {
-        require(_metachannel != 0x0);
-        require(_registry != 0x0);
+        require(_metachannel != 0x0, 'No metachannel CTF address provided to Msig constructor');
+        require(_registry != 0x0, 'No CTF Registry address provided to Msig constructor');
         metachannel = _metachannel;
         registry = ChannelRegistry(_registry);
     }
 
     function openAgreement(bytes _state, uint8 _ext, uint8 _v, bytes32 _r, bytes32 _s) public payable {
          // require the channel is not open yet
-        require(isOpen == false);
+        require(isOpen == false, 'isOpen true, expected false in openAgreement()');
 
         // check the account opening a channel signed the initial state
         address _initiator = _getSig(_state, _v, _r, _s);
@@ -88,9 +96,9 @@ contract MultiSig {
         // Ether opening deposit
         if(_ext == 0) {
             // ensure the amount sent to open channel matches the signed state balance
-            require(EtherExtension.getBalanceA(_state) == msg.value);
+            require(EtherExtension.getBalanceA(_state) == msg.value, 'msg value does not match partyA state balance');
             // ensure the sender of funds is partyA.. not sure if this is a hard require
-            require(EtherExtension.getPartyA(_state) == _initiator);
+            require(EtherExtension.getPartyA(_state) == _initiator, 'Party A does not mactch signature recovery');
             // set bonded state for ether escrow
             bonded += msg.value;
             // Flag that this channel manages ether state
@@ -121,12 +129,12 @@ contract MultiSig {
         // Ether joining deposit
         if(_ext == 0) {
             // ensure the amount sent to join channel matches the signed state balance
-            require(EtherExtension.getPartyB(_state) == _joiningParty);
+            require(EtherExtension.getPartyB(_state) == _joiningParty, 'Party B does not mactch signature recovery');
             // ensure the sender of funds is partyA.. not sure if this is a hard require
-            require(EtherExtension.getBalanceB(_state) == msg.value);
+            require(EtherExtension.getBalanceB(_state) == msg.value, 'msg value does not match partyB state balance');
             bonded += msg.value;
             // Require bonded is the sum of balances in state
-            require(EtherExtension.getTotal(_state) == bonded);
+            require(EtherExtension.getTotal(_state) == bonded, 'Ether total deposited does not match state balance');
         }
 
         // ERC20 Token joining deposit
@@ -160,10 +168,10 @@ contract MultiSig {
 
             address _a = EtherExtension.getPartyA(_state);
             address _b = EtherExtension.getPartyB(_state);
-            require(_a == partyA && _b == partyB);
+            require(_a == partyA && _b == partyB, 'Updated state address are incorrect');
 
             bonded += msg.value;
-            require(_total == bonded);
+            require(_total == bonded, 'Upate state provided with wrong ether value');
             extensionUsed[0] = true;
         }
 
@@ -195,9 +203,9 @@ contract MultiSig {
     function closeAgreementWithTimeout(bytes _state) public {
         MetaChannel deployedMetaChannel = MetaChannel(registry.resolveAddress(metachannel));
 
-        require(deployedMetaChannel.isClosed() == 1);
+        require(deployedMetaChannel.isClosed() == 1, 'Tried settling multisig state before closing metachannel');
 
-        require(keccak256(_state) == deployedMetaChannel.stateHash());
+        require(keccak256(_state) == deployedMetaChannel.stateHash(), 'timeout close provided with incorrect state');
         //state = _state;
 
         _finalize(_state);
@@ -210,7 +218,7 @@ contract MultiSig {
         address _partyA = _getSig(_state, sigV[0], sigR[0], sigS[0]);
         address _partyB = _getSig(_state, sigV[1], sigR[1], sigS[1]);
 
-        require(_isClose(_state));
+        require(_isClose(_state), 'State did not have a signed close sentinel');
         require(_hasAllSigs(_partyA, _partyB));
 
         _finalize(_state);
@@ -237,7 +245,7 @@ contract MultiSig {
     // this currently works with ether only. It should take a list of extenstions that need to be called
     function _finalize(bytes _s) internal {
         if(extensionUsed[0] == true) {
-            require(EtherExtension.getTotal(_s) == bonded);
+            require(EtherExtension.getTotal(_s) == bonded, 'tried finalizing ether state that does not match bnded value');
             partyA.transfer(EtherExtension.getBalanceA(_s));
             partyB.transfer(EtherExtension.getBalanceB(_s));
         }
@@ -246,7 +254,7 @@ contract MultiSig {
     }
 
     function _hasAllSigs(address _a, address _b) internal view returns (bool) {
-        require(_a == partyA && _b == partyB);
+        require(_a == partyA && _b == partyB, 'Signatures do not match parties in state');
 
         return true;
     }

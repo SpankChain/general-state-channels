@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.23;
 
 import "./InterpreterInterface.sol";
 import "../ChannelRegistry.sol";
@@ -62,6 +62,14 @@ contract InterpretPaymentChannel is InterpreterInterface {
         state = _state;
         totalBond = balanceA + balanceB;
     }
+
+    function getExtType() public returns(uint8 _ext) {
+      bytes memory _state = state;
+        assembly {
+            _ext := mload(add(_state, 96))
+        }
+    }
+
 
     function _decodeState(bytes _state) {
         // SPC State

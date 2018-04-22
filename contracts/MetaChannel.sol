@@ -1,5 +1,5 @@
 
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.23;
 
 import "./ChannelRegistry.sol";
 import "./interpreters/InterpreterInterface.sol";
@@ -41,7 +41,7 @@ contract MetaChannel {
     }
 
     // entry point for settlement of byzantine sub-channel
-    function startSettleStateSubchannel(uint _channelIndex, bytes _proof, bytes _state, bytes _subchannel, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
+    function startSettleStateSubchannel(uint _channelID, bytes _proof, bytes _state, bytes _subchannel, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
         // check that this state is signed
         address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
         address _partyB = _getSig(_state, _v[1], _r[1], _s[1]);
@@ -53,25 +53,25 @@ contract MetaChannel {
         require(_hasAllSigs(_partyA, _partyB));
 
         // sub-channel must be open
-        require(subChannels[_channelIndex].isSubClose == 0);
+        require(subChannels[_channelID].isSubClose == 0);
         // sub-channel must not already be in a settle state, this should
         // only be called once to initiate settlement period
-        require(subChannels[_channelIndex].isSubInSettlementState == 0);
+        require(subChannels[_channelID].isSubInSettlementState == 0);
 
         bytes32 _stateHash = keccak256(_subchannel);
         // do proof of inclusing in of sub-channel state in root state
         require(_isContained(_stateHash, _proof));
 
-        InterpreterInterface deployedInterpreter = InterpreterInterface(registry.resolveAddress(subChannels[_channelIndex].CTFaddress));
+        InterpreterInterface deployedInterpreter = InterpreterInterface(registry.resolveAddress(subChannels[_channelID].CTFaddress));
         // this interprets the agreed upon state and sets its storage (currently in both the meta and subchannel)
         deployedInterpreter.initState(_subchannel);
 
         // consider running some logic on the state from the interpreter to validate 
         // the new state obeys transition rules
 
-        subChannels[_channelIndex].isSubInSettlementState = 1;
-        subChannels[_channelIndex].subSettlementPeriodEnd = now + subChannels[_channelIndex].subSettlementPeriodLength;
-        subChannels[_channelIndex].subState = _subchannel;
+        subChannels[_channelID].isSubInSettlementState = 1;
+        subChannels[_channelID].subSettlementPeriodEnd = now + subChannels[_channelID].subSettlementPeriodLength;
+        subChannels[_channelID].subState = _subchannel;
     }
 
     // No need for a consensus close on the SPC since it is only instantiated in 
@@ -84,7 +84,7 @@ contract MetaChannel {
     // could just settle the sub-channels off chain until another dispute. In order to 
     // continue off chain the parties will have to update the timeout onchian with this setup
 
-    function challengeSettleStateSubchannel(uint _channelIndex, bytes _proof, bytes _state, bytes _subchannel, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
+    function challengeSettleStateSubchannel(uint _channelID, bytes _proof, bytes _state, bytes _subchannel, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
         // check sigs
         address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
         address _partyB = _getSig(_state, _v[1], _r[1], _s[1]);
@@ -93,15 +93,15 @@ contract MetaChannel {
         _decodeState(_state);
         require(_hasAllSigs(_partyA, _partyB));
 
-        require(subChannels[_channelIndex].isSubInSettlementState == 1);
-        require(subChannels[_channelIndex].subSettlementPeriodEnd <= now);
+        require(subChannels[_channelID].isSubInSettlementState == 1);
+        require(subChannels[_channelID].subSettlementPeriodEnd <= now);
 
         bytes32 _stateHash = keccak256(_subchannel);
         require(_isContained(_stateHash, _proof));
 
         // consult the now deployed special channel logic to see if sequence is higher
         // figure out how decode the CTFaddress from the state
-        InterpreterInterface deployedInterpreter = InterpreterInterface(registry.resolveAddress(subChannels[_channelIndex].CTFaddress));
+        InterpreterInterface deployedInterpreter = InterpreterInterface(registry.resolveAddress(subChannels[_channelID].CTFaddress));
         // since the initial bytes of the state are the same in subchannel as metachannel, we could reuse the isSequenceHigher here
         require(deployedInterpreter.isSequenceHigher(_subchannel));
         
@@ -109,23 +109,23 @@ contract MetaChannel {
         deployedInterpreter.initState(_subchannel);
 
         // extend the challenge time for the sub-channel
-        subChannels[_channelIndex].subSettlementPeriodEnd = now + subChannels[_channelIndex].subSettlementPeriodLength;
-        subChannels[_channelIndex].subState = _subchannel;
+        subChannels[_channelID].subSettlementPeriodEnd = now + subChannels[_channelID].subSettlementPeriodLength;
+        subChannels[_channelID].subState = _subchannel;
     }
 
     // in the case of HTLC sub-channels, this must be called after the subchannel interpreter
     // has had enough time to play out the locked txs and update is balances
-    function closeWithTimeoutSubchannel(uint _channelIndex) public {
-        InterpreterInterface deployedInterpreter = InterpreterInterface(registry.resolveAddress(subChannels[_channelIndex].CTFaddress));
+    function closeWithTimeoutSubchannel(uint _channelID) public {
+        InterpreterInterface deployedInterpreter = InterpreterInterface(registry.resolveAddress(subChannels[_channelID].CTFaddress));
 
-        require(subChannels[_channelIndex].subSettlementPeriodEnd <= now);
-        require(subChannels[_channelIndex].isSubClose == 0);
-        //require(subChannels[_channelIndex].isInSettlementState == 1);
+        require(subChannels[_channelID].subSettlementPeriodEnd <= now);
+        require(subChannels[_channelID].isSubClose == 0);
+        //require(subChannels[_channelID].isInSettlementState == 1);
 
         // this may not be needed since initState is called for every challenge
         // for htlc channels, the client just needs to be sure that for any individual
         // tx timeout, that the individual timeout is shorter than the channel timeout.
-        deployedInterpreter.finalizeState(subChannels[_channelIndex].subState);
+        deployedInterpreter.finalizeState();
 
         // update the meta-channel state for balance
         // TODO: generalize this to just STATE for the msig extension to read
@@ -136,8 +136,8 @@ contract MetaChannel {
         //balanceB += deployedInterpreter.balanceB();
         
         // maybe do this in the metachannel
-        deployedInterpreter.reconcileState();
-        subChannels[_channelIndex].isSubClose = 1;
+        _reconcileState(deployedInterpreter.getExtType());
+        subChannels[_channelID].isSubClose = 1;
     }
 
     /// --- Close Meta Channel Functions
@@ -215,6 +215,15 @@ contract MetaChannel {
         return true;
     }
 
+
+
+    function _reconcileState(uint8 _ext) internal {
+        if(_ext == 0) {
+            // do eth resettle
+        }
+
+    }
+
     function _isContained(bytes32 _hash, bytes _proof) internal returns (bool) {
         bytes32 cursor = _hash;
         bytes32 proofElem;
@@ -289,7 +298,7 @@ contract MetaChannel {
         return(a);
     }
 
-    function getSubChannel(uint _channelIndex)
+    function getSubChannel(uint _channelID)
         external
         view
         returns
@@ -305,7 +314,7 @@ contract MetaChannel {
         uint subSettlementPeriodEnd,
         bytes subState
     ) {
-        SubChannel storage g = subChannels[_channelIndex];
+        SubChannel storage g = subChannels[_channelID];
 
         return (
             g.isSubClose,

@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.23;
 
 import "./InterpreterInterface.sol";
 import "../ChannelRegistry.sol";
@@ -61,6 +61,14 @@ contract InterpretBidirectional is InterpreterInterface {
     function initState(bytes _state) onlyMeta returns (bool) {
         _decodeState(_state);
     }
+
+    function getExtType() public returns(uint8 _ext) {
+      bytes memory _state = state;
+        assembly {
+            _ext := mload(add(_state, 96))
+        }
+    }
+
 
     function _decodeState(bytes _state) {
         // SPC State

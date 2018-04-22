@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.23;
 
 import "./InterpreterInterface.sol";
 import "../ChannelRegistry.sol";
@@ -132,7 +132,7 @@ contract InterpretHTLC is InterpreterInterface {
 
     // this needs to be permissioned to allow only calls from participants or only 
     // callable from the ctf contract pointing to it
-    function finalizeState(bytes _state) onlyMeta returns (bool) {
+    function finalizeState() onlyMeta returns (bool) {
         // TODO: find best way to make this throw if the longest locked tx time hasn't elapsed
         require(now >= timeout);
         //_decodeState(_state);
@@ -156,6 +156,13 @@ contract InterpretHTLC is InterpreterInterface {
         }
 
         return cursor == lockroot;
+    }
+
+    function getExtType() public returns(uint8 _ext) {
+      bytes memory _state = state;
+        assembly {
+            _ext := mload(add(_state, 96))
+        }
     }
 
     // this needs to be permissioned to allow only calls from participants or only 
