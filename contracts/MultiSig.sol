@@ -197,10 +197,10 @@ contract MultiSig {
 
         require(deployedMetaChannel.isClosed() == 1);
 
-        require(keccak256(_state) == deployedMetaChannel.statehash());
+        require(keccak256(_state) == deployedMetaChannel.stateHash());
         //state = _state;
 
-        //_finalize();
+        _finalize(_state);
         isOpen = false;
     }
 
@@ -213,7 +213,7 @@ contract MultiSig {
         require(_isClose(_state));
         require(_hasAllSigs(_partyA, _partyB));
 
-        //_finalize();
+        _finalize(_state);
         isOpen = false;
     }
 
@@ -235,11 +235,11 @@ contract MultiSig {
     // no force pushing of state here due to state transitions resulting in value transfer
     // it is conceivable that you could force an advantageous final state and ddos your counterparty
     // this currently works with ether only. It should take a list of extenstions that need to be called
-    function _finalize() internal {
+    function _finalize(bytes _s) internal {
         if(extensionUsed[0] == true) {
-            require(EtherExtension.getTotal(state) == bonded);
-            partyA.transfer(EtherExtension.getBalanceA(state));
-            partyB.transfer(EtherExtension.getBalanceB(state));
+            require(EtherExtension.getTotal(_s) == bonded);
+            partyA.transfer(EtherExtension.getBalanceA(_s));
+            partyB.transfer(EtherExtension.getBalanceB(_s));
         }
         
         if(extensionUsed[1] == true) {}

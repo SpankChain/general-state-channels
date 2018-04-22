@@ -2,7 +2,7 @@
 pragma solidity ^0.4.18;
 
 import "./ChannelRegistry.sol";
-import "./lib/interpreters/LibBidirectional.sol";
+import "./interpreters/InterpreterInterface.sol";
 
 /// @title SpankChain Meta-channel - An interpreter designed to handle multiple state-channels
 /// @author Nathan Ginnever - <ginneversource@gmail.com>
@@ -27,8 +27,9 @@ contract MetaChannel {
     address public partyB; // Address of second channel participant
     uint public settlementPeriodLength; // How long challengers have to reply to settle engagement
     bytes32 public stateRoot; // The merkle root of all sub-channel state
+    bytes32 public stateHash; // Hash of entire state
+    uint public isClosed;
     bytes public state;
-
     // settlement state
     uint isInSettlementState = 0; // meta channel is in settling 1: Not settling 0
     ChannelRegistry public registry; // Address of the CTF registry
@@ -181,7 +182,7 @@ contract MetaChannel {
         require(isInSettlementState == 1);
 
         _decodeState(state);
-        statehash = keccak256(state);
+        stateHash = keccak256(state);
         isClosed = 1;
     }
 
@@ -238,7 +239,7 @@ contract MetaChannel {
     }
 
     function _decodeState(bytes _state) internal {
-        // MetaChannel State
+        // SPC State
         // [
         //    32 isClose
         //    64 sequence
