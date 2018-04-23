@@ -31,7 +31,7 @@ contract MetaChannel {
     uint public isClosed;
     bytes public state;
     // settlement state
-    uint isInSettlementState = 0; // meta channel is in settling 1: Not settling 0
+    uint public isInSettlementState = 0; // meta channel is in settling 1: Not settling 0
     ChannelRegistry public registry; // Address of the CTF registry
     uint public settlementPeriodEnd; // The time when challenges are no longer accepted after
 
@@ -71,7 +71,7 @@ contract MetaChannel {
 
         subChannels[_channelID].isSubInSettlementState = 1;
         subChannels[_channelID].subSettlementPeriodEnd = now + subChannels[_channelID].subSettlementPeriodLength;
-        subChannels[_channelID].subState = _subchannel;
+        //subChannels[_channelID].subState = _subchannel;
     }
 
     // No need for a consensus close on the SPC since it is only instantiated in 
@@ -110,7 +110,7 @@ contract MetaChannel {
 
         // extend the challenge time for the sub-channel
         subChannels[_channelID].subSettlementPeriodEnd = now + subChannels[_channelID].subSettlementPeriodLength;
-        subChannels[_channelID].subState = _subchannel;
+        //subChannels[_channelID].subState = _subchannel;
     }
 
     // in the case of HTLC sub-channels, this must be called after the subchannel interpreter
@@ -136,7 +136,8 @@ contract MetaChannel {
         //balanceB += deployedInterpreter.balanceB();
         
         // maybe do this in the metachannel
-        _reconcileState(deployedInterpreter.getExtType());
+        //_reconcileState(deployedInterpreter.getExtType());
+
         subChannels[_channelID].isSubClose = 1;
     }
 

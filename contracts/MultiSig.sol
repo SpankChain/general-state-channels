@@ -25,7 +25,8 @@ contract MultiSig {
     //    160 Meta Channel CTF address
     //    192 Sub-Channel Root Hash
     //    225 General State Sector Root Hash
-
+    // --------------------------------------
+    //
     // Sub-channel state
     //    32 isClose - Cooperative close flag
     //    64 sequence
@@ -33,39 +34,43 @@ contract MultiSig {
     //    128 address 1
     //    160 address 2
     //    192+ general state
-
+    // --------------------------------------
+    //
     // General State Sectors - Extensions must be able to handle these format
     // Sectors represent the final state of channels.
-
+    //
     // Ether Balances - Sector type [0]
     //    EthBalanceA
     //    EthBalanceB
     //
     // Token Balances - Sector type [1]
-    //    Token Address
+    //    numTokenTypes
+    //    tokenAddress
     //    ERC20BalanceA
     //    ERC20BalanceB
+    //    ...
     //
     // "Non-fungile" Objects - Sector type [2]
-    //    Num721Objects
+    //    num721Objects
     //    721TokenID
     //    ...
     //
     // Battle Arena Fighter State - Sector type [3]
+    //    arenaAddress
     //    wagerEthBalanceA - top level balance in Ether, may be 0
     //    wagerEthBalanceB
     //    wagerTokenAddress
     //    wagerTokenBalA
     //    wagerTokenBalB
-
+    //
     //    numFightersA - Start battle profile for A
-    //    FighterStatsA1 - Record owner of cat here, make final agreements based on battles
-    //    FighterStatsA2
+    //    fighterStatsA1 - Record owner of cat here, make final agreements based on battles
+    //    fighterStatsA2
     //    ...
-
+    //
     //    numFightersB - Start battle profile for B
-    //    FighterStatsB1
-    //    FighterStatsB2
+    //    fighterStatsB1
+    //    fighterStatsB2
     //    ...
 
     // Extension modules act on final state agreements from the sub-channel outcomes
@@ -95,6 +100,7 @@ contract MultiSig {
 
         // Ether opening deposit
         if(_ext == 0) {
+            require(msg.value > 0, 'Tried opening an ether agreement with 0 msg value');
             // ensure the amount sent to open channel matches the signed state balance
             require(EtherExtension.getBalanceA(_state) == msg.value, 'msg value does not match partyA state balance');
             // ensure the sender of funds is partyA.. not sure if this is a hard require
@@ -153,7 +159,8 @@ contract MultiSig {
     }
 
     // Updates must be additive
-    function updateAgreement(bytes _state, uint8 _ext, uint8[2] sigV, bytes32[2] sigR, bytes32[2] sigS) payable {
+    function depositState(bytes _state, uint8 _ext, uint8[2] sigV, bytes32[2] sigR, bytes32[2] sigS) payable {
+        require(isOpen == true, 'Tried adding state to a close msig wallet');
         address _partyA = _getSig(_state, sigV[0], sigR[0], sigS[0]);
         address _partyB = _getSig(_state, sigV[1], sigR[1], sigS[1]);
 
@@ -182,10 +189,7 @@ contract MultiSig {
         if(_ext == 2) {}
 
         // CKBA Stats adding deposit
-        if(_ext == 3) {}  
-
-        // Set storage for state
-        //state = _state;
+        if(_ext == 3) {}
     }
 
     // TODO allow executing subchannel state. this will allow an on-chain sub-channel close
@@ -200,15 +204,18 @@ contract MultiSig {
     // needs to have settlement process to close the final balance
     // or just check that the meta channel has closed on a settle process
     // this allows the spc to checkpoint state
-    function closeAgreementWithTimeout(bytes _state) public {
+
+    // Send all state to the meta channel, since it has been deployed, do this
+    // even if you want to close just one channel, since it is already deployed
+    //  we might as well ditch the msig contract
+    function closeAgreementByzantine(bytes _state) public {
         MetaChannel deployedMetaChannel = MetaChannel(registry.resolveAddress(metachannel));
 
-        require(deployedMetaChannel.isClosed() == 1, 'Tried settling multisig state before closing metachannel');
+        require(deployedMetaChannel.isInSettlementState() == 1, 'Tried settling multisig without a settlement in the metachannel');
 
         require(keccak256(_state) == deployedMetaChannel.stateHash(), 'timeout close provided with incorrect state');
-        //state = _state;
 
-        _finalize(_state);
+        _finalizeByzantine(_state);
         isOpen = false;
     }
 
@@ -225,13 +232,14 @@ contract MultiSig {
         isOpen = false;
     }
 
-    function finalizeSector(bytes _sectorState) public {
-        // This may only be called 
-        require(isOpen == false);
-
-        // check to see if sector is contained in sector root hash
-
-        // get extension type for sector
+    function _finalize(bytes _s) public {
+        if(extensionUsed[0] == true) {
+            require(EtherExtension.getTotal(_s) == bonded, 'tried finalizing ether state that does not match bnded value');
+            partyA.transfer(EtherExtension.getBalanceA(_s));
+            partyB.transfer(EtherExtension.getBalanceB(_s));
+        }
+        
+        if(extensionUsed[1] == true) {}
 
     }
 
@@ -243,11 +251,12 @@ contract MultiSig {
     // no force pushing of state here due to state transitions resulting in value transfer
     // it is conceivable that you could force an advantageous final state and ddos your counterparty
     // this currently works with ether only. It should take a list of extenstions that need to be called
-    function _finalize(bytes _s) internal {
+    function _finalizeByzantine(bytes _s) internal {
         if(extensionUsed[0] == true) {
             require(EtherExtension.getTotal(_s) == bonded, 'tried finalizing ether state that does not match bnded value');
-            partyA.transfer(EtherExtension.getBalanceA(_s));
-            partyB.transfer(EtherExtension.getBalanceB(_s));
+            uint256 _total = EtherExtension.getBalanceA(_s) + EtherExtension.getBalanceB(_s);
+            require(_total == bonded, 'settlement state provided with wrong ether value');
+            registry.resolveAddress(metachannel).transfer(_total);
         }
         
         if(extensionUsed[1] == true) {}
