@@ -2,7 +2,7 @@ pragma solidity ^0.4.23;
 
 import "./LibInterpreterInterface.sol";
 
-contract LibHTLCether is LibInterpreterInterface {
+contract LibHashlockEther is LibInterpreterInterface {
     // State
     // [0-31] isClose flag
     // [32-63] sequence
@@ -15,8 +15,6 @@ contract LibHTLCether is LibInterpreterInterface {
     // [256-287] lockTXroot
     // [288-319] metachannelAddress
 
-    // this needs to be permissioned to allow only calls from participants or only 
-    // callable from the ctf contract pointing to it
     function finalizeState(bytes _s) returns (bool) {
         // Just dont send here, force the balace to be withdrawn from
         // a special function on the metachannel

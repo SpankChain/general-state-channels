@@ -2,7 +2,7 @@ pragma solidity ^0.4.23;
 
 import "./LibInterpreterInterface.sol";
 
-contract LibBidirectional is LibInterpreterInterface {
+contract LibBidirectionalEther is LibInterpreterInterface {
     // State
     // [0-31] isClose flag
     // [32-63] address sender

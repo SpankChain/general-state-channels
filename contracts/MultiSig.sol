@@ -3,6 +3,7 @@ pragma solidity ^0.4.23;
 import "./CTFRegistry.sol";
 import "./MetaChannel.sol";
 import "./lib/extensions/EtherExtension.sol";
+import "./lib/extensions/ExtensionInterface.sol";
 
 /// @title SpankChain General-State-Channel - A multisignature "wallet" for general state
 /// @author Nathan Ginnever - <ginneversource@gmail.com>
@@ -77,10 +78,9 @@ contract MultiSig {
 
     address public partyA;
     address public partyB;
-    bytes32 metachannel; // Counterfactual address of metachannel
-    bool[4] public extensionUsed; // ['ether', 'erc20', 'erc721'.  'ckba']
-
-    uint256 bonded;
+    bytes32 public metachannel; // Counterfactual address of metachannel
+    mapping(address => bool) extensionUsed;
+    address[4] extensions = [0x0, 0x0, 0x0, 0x0];
 
     bool isOpen = false; // true when both parties have joined
 
@@ -91,37 +91,22 @@ contract MultiSig {
         registry = CTFRegistry(_registry);
     }
 
-    function openAgreement(bytes _state, uint8 _ext, uint8 _v, bytes32 _r, bytes32 _s) public payable {
+    function openAgreement(bytes _state, address _ext, uint8 _v, bytes32 _r, bytes32 _s) public payable {
          // require the channel is not open yet
         require(isOpen == false, 'isOpen true, expected false in openAgreement()');
 
         // check the account opening a channel signed the initial state
         address _initiator = _getSig(_state, _v, _r, _s);
 
-        // Ether opening deposit
-        if(_ext == 0) {
-            require(msg.value > 0, 'Tried opening an ether agreement with 0 msg value');
-            // ensure the amount sent to open channel matches the signed state balance
-            require(EtherExtension.getBalanceA(_state) == msg.value, 'msg value does not match partyA state balance');
-            // ensure the sender of funds is partyA.. not sure if this is a hard require
-            require(EtherExtension.getPartyA(_state) == _initiator, 'Party A does not mactch signature recovery');
-            // set bonded state for ether escrow
-            bonded += msg.value;
-            // Flag that this channel manages ether state
-            extensionUsed[0] = true;
-        }
+        ExtensionInterface deployedExtension = ExtensionInterface(_ext);
 
-        // ERC20 Token opening deposit
-        if(_ext == 1) {}
+        uint _length = _state.length;
 
-        // ERC721 Object opening deposit
-        if(_ext == 2) {}
+        // the open inerface can generalize an entry point for differenct kinds of checks 
+        // on opening state
+        deployedExtension.delegatecall(bytes4(keccak256("open(bytes)")), bytes32(32), bytes32(_length), _state);
+        extensionUsed[_ext] = true;
 
-        // CKBA Stats opening deposit
-        if(_ext == 3) {}  
-        
-        // Set storage for state
-        //state = _state;
         partyA = _initiator;
     }
 
@@ -131,26 +116,13 @@ contract MultiSig {
 
         // check that the state is signed by the sender and sender is in the state
         address _joiningParty = _getSig(_state, _v, _r, _s);
+
+        ExtensionInterface deployedExtension = ExtensionInterface(_ext);
+
+        uint _length = _state.length;
         
-        // Ether joining deposit
-        if(_ext == 0) {
-            // ensure the amount sent to join channel matches the signed state balance
-            require(EtherExtension.getPartyB(_state) == _joiningParty, 'Party B does not mactch signature recovery');
-            // ensure the sender of funds is partyA.. not sure if this is a hard require
-            require(EtherExtension.getBalanceB(_state) == msg.value, 'msg value does not match partyB state balance');
-            bonded += msg.value;
-            // Require bonded is the sum of balances in state
-            require(EtherExtension.getTotal(_state) == bonded, 'Ether total deposited does not match state balance');
-        }
-
-        // ERC20 Token joining deposit
-        if(_ext == 1) {}
-
-        // ERC721 Object joining deposit
-        if(_ext == 2) {}
-
-        // CKBA Stats joining deposit
-        if(_ext == 3) {}  
+        deployedExtension.delegatecall(bytes4(keccak256("join(bytes)")), bytes32(32), bytes32(_length), _state);
+        extensionUsed[_ext] = true;
 
         // Set storage for state
         partyB = _joiningParty;
@@ -167,29 +139,12 @@ contract MultiSig {
         // Require both signatures 
         require(_hasAllSigs(_partyA, _partyB));
 
-        // Ether deposit update
-        if(_ext == 0) {
-            uint256 _balA = EtherExtension.getBalanceA(_state);
-            uint256 _balB = EtherExtension.getBalanceB(_state);
-            uint256 _total = EtherExtension.getTotal(_state);
+        ExtensionInterface deployedExtension = ExtensionInterface(_ext);
 
-            address _a = EtherExtension.getPartyA(_state);
-            address _b = EtherExtension.getPartyB(_state);
-            require(_a == partyA && _b == partyB, 'Updated state address are incorrect');
+        uint _length = _state.length;
 
-            bonded += msg.value;
-            require(_total == bonded, 'Upate state provided with wrong ether value');
-            extensionUsed[0] = true;
-        }
-
-        // ERC20 Token adding deposit
-        if(_ext == 1) {}
-
-        // ERC721 Object adding deposit
-        if(_ext == 2) {}
-
-        // CKBA Stats adding deposit
-        if(_ext == 3) {}
+        deployedExtension.delegatecall(bytes4(keccak256("update(bytes, uint256)")), bytes32(32), bytes32(_length), _state);
+        extensionUsed[_ext] = true;
     }
 
     // TODO allow executing subchannel state. this will allow an on-chain sub-channel close
@@ -231,15 +186,14 @@ contract MultiSig {
         isOpen = false;
     }
 
-    function _finalize(bytes _s) public {
-        if(extensionUsed[0] == true) {
-            require(EtherExtension.getTotal(_s) == bonded, 'tried finalizing ether state that does not match bnded value');
-            partyA.transfer(EtherExtension.getBalanceA(_s));
-            partyB.transfer(EtherExtension.getBalanceB(_s));
+    function _finalize(bytes _s) internal {
+        uint _length = _s.length;
+        for(uint i = 0; i < extensions.length; i++) {
+            if(extensionUsed[extensions[i]]) {
+                ExtensionInterface deployedExtension = ExtensionInterface(extensions[i]);
+                deployedExtension.delegatecall(bytes4(keccak256("finalize(bytes)")), bytes32(32), bytes32(_length), _s);
+            }
         }
-        
-        if(extensionUsed[1] == true) {}
-
     }
 
 
@@ -251,14 +205,14 @@ contract MultiSig {
     // it is conceivable that you could force an advantageous final state and ddos your counterparty
     // this currently works with ether only. It should take a list of extenstions that need to be called
     function _finalizeByzantine(bytes _s) internal {
-        if(extensionUsed[0] == true) {
-            require(EtherExtension.getTotal(_s) == bonded, 'tried finalizing ether state that does not match bnded value');
-            uint256 _total = EtherExtension.getBalanceA(_s) + EtherExtension.getBalanceB(_s);
-            require(_total == bonded, 'settlement state provided with wrong ether value');
-            registry.resolveAddress(metachannel).transfer(_total);
+        address _meta = registry.resolveAddress(metachannel);
+        uint _length = _s.length;
+        for(uint i = 0; i < extensions.length; i++) {
+            if(extensionUsed[extensions[i]]) {
+                ExtensionInterface deployedExtension = ExtensionInterface(extensions[i]);
+                deployedExtension.delegatecall(bytes4(keccak256("finalizeByzantine(bytes, address)")), bytes32(32), bytes32(_length), _s, _meta);
+            }
         }
-        
-        if(extensionUsed[1] == true) {}
     }
 
     function _hasAllSigs(address _a, address _b) internal view returns (bool) {

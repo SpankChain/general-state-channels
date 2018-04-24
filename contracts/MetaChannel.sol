@@ -167,13 +167,6 @@ contract MetaChannel {
         require(_isContained(_txHash, _proof, subChannels[_channelID].lockroot));
 
         // no need to refund?, just don't update the state balance
-        // for the receiver
-        // // refund case
-        // if (_secret == 0x0) {
-        //     require(_timeout <= now);
-        //     //refund to sender
-        //     balanceA+=_amount;
-        // }
 
         // redeem case
         require(keccak256(_secret) == _hash);
