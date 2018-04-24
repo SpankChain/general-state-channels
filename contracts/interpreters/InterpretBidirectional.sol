@@ -1,7 +1,6 @@
 pragma solidity ^0.4.23;
 
 import "./InterpreterInterface.sol";
-import "../ChannelRegistry.sol";
 
 contract InterpretBidirectional is InterpreterInterface {
     // State
@@ -19,16 +18,10 @@ contract InterpretBidirectional is InterpreterInterface {
 
     
     bytes32 public CTFMetaAddress;
-    ChannelRegistry public registry;
 
-    modifier onlyMeta() {
-        require(msg.sender == registry.resolveAddress(CTFMetaAddress));
-        _;
-    }
 
     function InterpretBidirectional(bytes32 _CTFMetaAddress, address _registry) {
         CTFMetaAddress = _CTFMetaAddress;
-        registry = ChannelRegistry(_registry);
     }
 
     function isClose(bytes _data) public returns(bool) {
@@ -58,7 +51,7 @@ contract InterpretBidirectional is InterpreterInterface {
     }
 
     // TODO: MODIFIER
-    function initState(bytes _state) onlyMeta returns (bool) {
+    function initState(bytes _state) returns (bool) {
         _decodeState(_state);
     }
 

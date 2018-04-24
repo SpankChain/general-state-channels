@@ -1,6 +1,6 @@
 pragma solidity ^0.4.23;
 
-import "./ChannelRegistry.sol";
+import "./CTFRegistry.sol";
 import "./MetaChannel.sol";
 import "./lib/extensions/EtherExtension.sol";
 
@@ -15,7 +15,7 @@ contract MultiSig {
     string public constant NAME = "General State MultiSig";
     string public constant VERSION = "0.0.1";
 
-    ChannelRegistry public registry;
+    CTFRegistry public registry;
 
     // STATE
     //    32 isClose - Cooperative close flag
@@ -88,7 +88,7 @@ contract MultiSig {
         require(_metachannel != 0x0, 'No metachannel CTF address provided to Msig constructor');
         require(_registry != 0x0, 'No CTF Registry address provided to Msig constructor');
         metachannel = _metachannel;
-        registry = ChannelRegistry(_registry);
+        registry = CTFRegistry(_registry);
     }
 
     function openAgreement(bytes _state, uint8 _ext, uint8 _v, bytes32 _r, bytes32 _s) public payable {

@@ -1,7 +1,7 @@
 pragma solidity ^0.4.23;
 
 import "./InterpreterInterface.sol";
-import "../ChannelRegistry.sol";
+
 
 contract InterpretBattleChannel is InterpreterInterface {
     // State
@@ -60,20 +60,14 @@ contract InterpretBattleChannel is InterpreterInterface {
     address[] partyArr;
     
     bytes32 public CTFMetaAddress;
-    ChannelRegistry public registry;
 
-    modifier onlyMeta() {
-        require(msg.sender == registry.resolveAddress(CTFMetaAddress));
-        _;
-    }
 
     function InterpretBattleChannel(bytes32 _CTFMetaAddress, address _registry) {
         CTFMetaAddress = _CTFMetaAddress;
-        registry = ChannelRegistry(_registry);
     }
 
     // TODO: Restrict to modifier
-    function initState(bytes _data) onlyMeta returns (bool) {
+    function initState(bytes _data) returns (bool) {
         _decodeState(_data);
         return true;
     }

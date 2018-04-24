@@ -1,6 +1,8 @@
 pragma solidity ^0.4.23;
 
-library LibBidirectional {
+import "./LibInterpreterInterface.sol";
+
+contract LibBidirectional is LibInterpreterInterface {
     // State
     // [0-31] isClose flag
     // [32-63] address sender
@@ -8,94 +10,50 @@ library LibBidirectional {
     // [96-127] bond 
     // [128-159] balance of receiver
 
-    // This always returns true since the receiver should only
-    // sign and close the highest balance they have
+    function finalizeState(bytes _state) public returns (bool) {
+        address _a = getPartyA(_state);
+        address _b = getPartyB(_state);
+        uint256 _balA = getBalanceA(_state);
+        uint256 _balB = getBalanceB(_state);
 
-
-    function isClose(bytes _data) public returns(bool) {
-        return true;
+        _a.transfer(_balA);
+        _b.transfer(_balB);
     }
 
-    function isSequenceHigher(bytes _data) public returns (bool) {
-        uint isHigher1;
-        uint isHigher2;
-
-        //bytes memory _s = state;
-
+    function getPartyA(bytes _s) public constant returns(address _partyA) {
         assembly {
-            isHigher1 := mload(add(_data, 64))
-            isHigher2 := mload(add(_data, 64))
-        }
-
-        require(isHigher1 < isHigher2);
-        return true;
-    }
-
-    // just look for receiver sig
-    function quickClose(bytes _data) public returns (bool) {
-        _decodeState(_data);
-        //require(balanceA + balanceB == totalBond);
-        return true;
-    }
-
-    // TODO: MODIFIER
-    function initState(bytes _state) public returns (bool) {
-        _decodeState(_state);
-    }
-
-    function getExtType(bytes _state) public returns(uint8 _ext) {
-      bytes memory _s = _state;
-        assembly {
-            _ext := mload(add(_s, 96))
+            _partyA := mload(add(_s, 96))
         }
     }
 
+    function getPartyB(bytes _s) public constant returns(address _partyB) {
+        assembly {
+            _partyB := mload(add(_s, 96))
+        }
+    }
 
-    function _decodeState(bytes _state) {
-        // SPC State
-        // [
-        //    32 isClose
-        //    64 sequence
-        //    96 numInstalledChannels
-        //    128 address 1
-        //    160 address 2
-        //    192 balance 1
-        //    224 balance 2
-        //    256 channel 1 state length
-        //    288 channel 1 interpreter type
-        //    320 channel 1 CTF address
-        //    [
-        //        isClose
-        //        sequence
-        //        settlement period length
-        //        channel specific state
-        //        ...
-        //    ]
-        //    channel 2 state length
-        //    channel 2 interpreter type
-        //    channel 2 CTF address
-        //    [
-        //        isClose
-        //        sequence
-        //        settlement period length
-        //        channel specific state
-        //        ...
-        //    ]
-        //    ...
-        // ]
+    function getBalanceA(bytes _s) public constant returns(uint256 _balanceA) {
+        assembly {
+            _balanceA := mload(add(_s, 160))
+        }
+    }
 
-        uint256 _bond;
-        uint256 _balanceA;
-        uint256 _balanceB;
+    function getBalanceB(bytes _s) public constant returns(uint256 _balanceB) {
+        assembly {
+            _balanceB := mload(add(_s, 192))
+        }
+    }
 
+    function getTotal(bytes _s) public constant returns(uint256) {
+        uint256 _a;
+        uint256 _b;
 
         assembly {
-            _bond := mload(add(_state, 256))
-            _balanceA := mload(add(_state, 288))
-            _balanceB := mload(add(_state, 320))
+            _b := mload(add(_s, 160))
+            _b := mload(add(_s, 192))
         }
 
-        //balanceA = _balanceA;
-        //balanceB = _balanceB;
+        // TODO: safemath
+        return _a + _b;
     }
 }

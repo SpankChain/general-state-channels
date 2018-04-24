@@ -1,6 +1,6 @@
 pragma solidity ^0.4.23;
 
-contract ChannelRegistry {
+contract CTFRegistry {
     mapping(bytes32 => address) registry;
     bytes public _code;
     uint public len;

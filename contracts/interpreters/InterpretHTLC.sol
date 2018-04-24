@@ -1,7 +1,6 @@
 pragma solidity ^0.4.23;
 
 import "./InterpreterInterface.sol";
-import "../ChannelRegistry.sol";
 
 contract InterpretHTLC is InterpreterInterface {
     // State
@@ -32,16 +31,9 @@ contract InterpretHTLC is InterpreterInterface {
     // of txs to build to correct final state again.
 
     bytes32 public CTFMetaAddress;
-    ChannelRegistry public registry;
-
-    modifier onlyMeta() {
-        require(msg.sender == registry.resolveAddress(CTFMetaAddress));
-        _;
-    }
 
     function InterpretHTLC(bytes32 _CTFMetaAddress, address _registry) {
         CTFMetaAddress = _CTFMetaAddress;
-        registry = ChannelRegistry(_registry);
     }
 
     // Lock lockedTx;
@@ -125,14 +117,14 @@ contract InterpretHTLC is InterpreterInterface {
 
     // this needs to be permissioned to allow only calls from participants or only 
     // callable from the ctf contract pointing to it
-    function initState(bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) onlyMeta returns (bool) {
+    function initState(bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) returns (bool) {
         _decodeState(_state);
         state = _state;
     }
 
     // this needs to be permissioned to allow only calls from participants or only 
     // callable from the ctf contract pointing to it
-    function finalizeState() onlyMeta returns (bool) {
+    function finalizeState() returns (bool) {
         // TODO: find best way to make this throw if the longest locked tx time hasn't elapsed
         require(now >= timeout);
         //_decodeState(_state);

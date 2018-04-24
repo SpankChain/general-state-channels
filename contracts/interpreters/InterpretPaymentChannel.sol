@@ -1,7 +1,6 @@
 pragma solidity ^0.4.23;
 
 import "./InterpreterInterface.sol";
-import "../ChannelRegistry.sol";
 
 contract InterpretPaymentChannel is InterpreterInterface {
     // State
@@ -22,16 +21,9 @@ contract InterpretPaymentChannel is InterpreterInterface {
 
     
     bytes32 public CTFMetaAddress;
-    ChannelRegistry public registry;
-
-    modifier onlyMeta() {
-        require(msg.sender == registry.resolveAddress(CTFMetaAddress));
-        _;
-    }
 
     function InterpretPaymentChannel(bytes32 _CTFMetaAddress, address _registry) {
         CTFMetaAddress = _CTFMetaAddress;
-        registry = ChannelRegistry(_registry);
     }
 
     
@@ -57,7 +49,7 @@ contract InterpretPaymentChannel is InterpreterInterface {
     }
 
     // TODO: MODIFY
-    function initState(bytes _state) onlyMeta returns (bool) {
+    function initState(bytes _state) returns (bool) {
         _decodeState(_state);
         state = _state;
         totalBond = balanceA + balanceB;
