@@ -2,7 +2,6 @@ pragma solidity ^0.4.23;
 
 import "./CTFRegistry.sol";
 import "./MetaChannel.sol";
-import "./lib/extensions/EtherExtension.sol";
 import "./lib/extensions/ExtensionInterface.sol";
 
 /// @title SpankChain General-State-Channel - A multisignature "wallet" for general state
@@ -25,17 +24,6 @@ contract MultiSig {
     //    128 address 2
     //    160 Meta Channel CTF address
     //    192 Sub-Channel Root Hash
-    //    225 General State Sector Root Hash
-    // --------------------------------------
-    //
-    // Sub-channel state
-    //    32 isClose - Cooperative close flag
-    //    64 sequence
-    //    96 extensionType - What top level state this channel settles to
-    //    128 address 1
-    //    160 address 2
-    //    192+ general state
-    // --------------------------------------
     //
     // General State Sectors - Extensions must be able to handle these format
     // Sectors represent the final state of channels.
@@ -145,15 +133,6 @@ contract MultiSig {
 
         deployedExtension.delegatecall(bytes4(keccak256("update(bytes, uint256)")), bytes32(32), bytes32(_length), _state);
         extensionUsed[_ext] = true;
-    }
-
-    // TODO allow executing subchannel state. this will allow an on-chain sub-channel close
-    // and removal of assets from the channel without closing and removing everything
-    function executeStateSector() {
-        // this might require an executable flag on the state like the isClose sentinel.
-        // this flag would represent an agreement to execute the given state
-        // this state should reflect the current state of the metachannel, which in cases
-        // of fault will reflect the final outcome of subchannel settlement
     }
 
     // needs to have settlement process to close the final balance
