@@ -42,8 +42,9 @@ contract EtherExtension is ExtensionInterface {
         return _a + _b;
     }
 
-    function open(bytes _state) public view returns (bool) {
+    function open(bytes _state, address _initiator) public view returns (bool) {
         require(msg.value > 0, 'Tried opening an ether agreement with 0 msg value');
+        require(_initiator == getPartyA(_state));
         // ensure the amount sent to open channel matches the signed state balance
         require(getBalanceA(_state) == msg.value, 'msg value does not match partyA state balance');
         // ensure the sender of funds is partyA.. not sure if this is a hard require
@@ -51,7 +52,8 @@ contract EtherExtension is ExtensionInterface {
         return true;
     }
 
-    function join(bytes _state) public view returns (bool) {
+    function join(bytes _state, address _responder) public view returns (bool) {
+        require(_responder == getPartyB(_state));
         // ensure the amount sent to join channel matches the signed state balance
         //require(getPartyB(_state) == _joiningParty, 'Party B does not mactch signature recovery');
         // ensure the sender of funds is partyA.. not sure if this is a hard require
