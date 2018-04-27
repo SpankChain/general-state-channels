@@ -21,6 +21,9 @@ contract LibBidirectionalERC20 is LibInterpreterInterface {
         uint256 _balA = getBalanceA(_state);
         uint256 _balB = getBalanceB(_state);
 
+        require(getTotal(_state) == getBalanceA(_state) + getBalanceB(_state));
+
+        // TODO import ERC20 token interfaces
         //specificToken.transfer(partyA, _balA);
         //specificToken.transfer(partyB, _balB);
     }

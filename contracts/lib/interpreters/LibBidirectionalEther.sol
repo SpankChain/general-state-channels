@@ -16,6 +16,8 @@ contract LibBidirectionalEther is LibInterpreterInterface {
         uint256 _balA = getBalanceA(_state);
         uint256 _balB = getBalanceB(_state);
 
+        require(getTotal(_state) == getBalanceA(_state) + getBalanceB(_state));
+
         _a.transfer(_balA);
         _b.transfer(_balB);
     }

@@ -78,6 +78,7 @@ contract MetaChannel {
         subChannels[_channelID].subSettlementPeriodEnd = now + subChannels[_channelID].subSettlementPeriodLength;
         stateHash = keccak256(_state);
         subChannels[_channelID].subState = _subchannel;
+        state = _state;
     }
 
     // No need for a consensus close on the SPC since it is only instantiated in 
@@ -116,6 +117,7 @@ contract MetaChannel {
         // extend the challenge time for the sub-channel
         subChannels[_channelID].subSettlementPeriodEnd = now + subChannels[_channelID].subSettlementPeriodLength;
         subChannels[_channelID].subState = _subchannel;
+        state = _state;
     }
 
     // in the case of HTLC sub-channels, this must be called after the subchannel interpreter
@@ -155,6 +157,10 @@ contract MetaChannel {
         subChannels[_channelID].isSubInSettlementState == 0;
     }
 
+    // TODO: Fix this, have it just take the channel id like close, but this time for htlc it will
+    // read all of these params off of the htlc state and run its inclusion proof in there.
+    //function update(uint _channelID)
+    //  delegate a call now to update and do all of these checks
     function updateHTLCBalances(uint _channelID, bytes _proof, uint256 _lockedNonce, uint256 _amount, bytes32 _hash, uint256 _timeout, bytes _secret) public returns (bool) {
         require(subChannels[_channelID].isSubInSettlementState == 0);
         require(subChannels[_channelID].isSubClose == 1);
@@ -188,56 +194,57 @@ contract MetaChannel {
     }
 
 
-    /// --- Close Meta Channel Functions
+    // /// --- Close Meta Channel Functions
 
-    function startSettle(bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
-        address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
-        address _partyB = _getSig(_state, _v[1], _r[1], _s[1]);
+    // function startSettle(bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
+    //     address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
+    //     address _partyB = _getSig(_state, _v[1], _r[1], _s[1]);
 
-        require(_hasAllSigs(_partyA, _partyB));
+    //     require(_hasAllSigs(_partyA, _partyB));
 
-        _decodeState(_state);
+    //     _decodeState(_state);
 
-        require(isClosed == 0);
-        require(isInSettlementState == 0);
+    //     require(isClosed == 0);
+    //     require(isInSettlementState == 0);
 
-        state = _state;
+    //     state = _state;
 
-        isInSettlementState = 1;
-        settlementPeriodEnd = now + settlementPeriodLength;
-    }
+    //     isInSettlementState = 1;
+    //     settlementPeriodEnd = now + settlementPeriodLength;
+    // }
 
-    function challengeSettle(bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
-        address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
-        address _partyB = _getSig(_state, _v[1], _r[1], _s[1]);
+    // function challengeSettle(bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
+    //     address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
+    //     address _partyB = _getSig(_state, _v[1], _r[1], _s[1]);
 
-        require(_hasAllSigs(_partyA, _partyB));
+    //     require(_hasAllSigs(_partyA, _partyB));
 
-        // require the channel to be in a settling state
-        _decodeState(_state);
-        require(isInSettlementState == 1);
-        require(settlementPeriodEnd <= now);
+    //     // require the channel to be in a settling state
+    //     _decodeState(_state);
+    //     require(isInSettlementState == 1);
+    //     require(settlementPeriodEnd <= now);
 
-        isSequenceHigher(_state, sequence);
+    //     isSequenceHigher(_state, sequence);
 
-        settlementPeriodEnd = now + settlementPeriodLength;
-        state = _state;
-        sequence++;
-    }
+    //     settlementPeriodEnd = now + settlementPeriodLength;
+    //     state = _state;
+    //     sequence++;
+    // }
 
-    function closeWithTimeout() public {
-        require(settlementPeriodEnd <= now);
-        require(isClosed == 0);
-        require(isInSettlementState == 1);
+    // function closeWithTimeout() public {
+    //     require(settlementPeriodEnd <= now);
+    //     require(isClosed == 0);
+    //     require(isInSettlementState == 1);
 
-        _decodeState(state);
-        // TODO: Do same extension system here as msig so
-        // that all remain state that hasn't been used in a subchannel may be redistributed back
-        // to the main chain
-        stateHash = keccak256(state);
-        isClosed = 1;
-    }
+    //     _decodeState(state);
+    //     // TODO: Do same extension system here as msig so
+    //     // that all remain state that hasn't been used in a subchannel may be redistributed back
+    //     // to the main chain
+    //     stateHash = keccak256(state);
+    //     isClosed = 1;
+    // }
 
+    // Internal Functions
     function _getCTFaddress(bytes _s) public returns (bytes32 _ctf) {
         assembly {
             _ctf := mload(add(_s, 64))

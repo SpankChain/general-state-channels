@@ -85,7 +85,7 @@ contract MultiSig {
         partyA = _initiator;
     }
 
-    function joinAgreement(bytes _state, uint8 _ext, uint8 _v, bytes32 _r, bytes32 _s) public payable {
+    function joinAgreement(bytes _state, address _ext, uint8 _v, bytes32 _r, bytes32 _s) public payable {
         // require the channel is not open yet
         require(isOpen == false);
 
@@ -107,7 +107,7 @@ contract MultiSig {
     }
 
     // Updates must be additive
-    function depositState(bytes _state, uint8 _ext, uint8[2] sigV, bytes32[2] sigR, bytes32[2] sigS) payable {
+    function depositState(bytes _state, address _ext, uint8[2] sigV, bytes32[2] sigR, bytes32[2] sigS) payable {
         require(isOpen == true, 'Tried adding state to a close msig wallet');
         address _partyA = _getSig(_state, sigV[0], sigR[0], sigS[0]);
         address _partyB = _getSig(_state, sigV[1], sigR[1], sigS[1]);
@@ -130,16 +130,36 @@ contract MultiSig {
     // Send all state to the meta channel, since it has been deployed, do this
     // even if you want to close just one channel, since it is already deployed
     //  we might as well ditch the msig contract
-    function closeAgreementByzantine(bytes _state) public {
+    function closeSubchannel(uint _channelID) public {
         MetaChannel deployedMetaChannel = MetaChannel(registry.resolveAddress(metachannel));
 
-        require(deployedMetaChannel.isInSettlementState() == 1, 'Tried settling multisig without a settlement in the metachannel');
+        //var(a,b,c,d,e,f,g,h,i) = deployedMetaChannel.getSubChannel(_channelID);
 
-        require(keccak256(_state) == deployedMetaChannel.stateHash(), 'timeout close provided with incorrect state');
+        // require the subchannel is closed
+        //require(a == 1);
 
-        _finalizeByzantine(_state);
-        isOpen = false;
+        deployedMetaChannel.delegatecall(bytes4(keccak256("closeWithTimeoutSubchannel(uint)")), _channelID);
+        
+        // uint _length = _state.length;
+        // ExtensionInterface deployedExtension = ExtensionInterface(_ext);
+        // deployedExtension.delegatecall(bytes4(keccak256("finalize(bytes)")), bytes32(32), bytes32(_length), _state);
     }
+
+    function updateSubchannel(uint _channelID) public {
+        MetaChannel deployedMetaChannel = MetaChannel(registry.resolveAddress(metachannel));
+
+        //var(a,b,c,d,e,f,g,h,i) = deployedMetaChannel.getSubChannel(_channelID);
+
+        // require the subchannel is closed
+        //require(a == 1);
+
+        deployedMetaChannel.delegatecall(bytes4(keccak256("updateHTLCBalances(uint)")), _channelID);
+        
+        // uint _length = _state.length;
+        // ExtensionInterface deployedExtension = ExtensionInterface(_ext);
+        // deployedExtension.delegatecall(bytes4(keccak256("finalize(bytes)")), bytes32(32), bytes32(_length), _state);
+    }
+
 
 
     function closeAgreement(bytes _state, uint8[2] sigV, bytes32[2] sigR, bytes32[2] sigS) public {
@@ -149,11 +169,11 @@ contract MultiSig {
         require(_isClose(_state), 'State did not have a signed close sentinel');
         require(_hasAllSigs(_partyA, _partyB));
 
-        _finalize(_state);
+        _finalizeAll(_state);
         isOpen = false;
     }
 
-    function _finalize(bytes _s) internal {
+    function _finalizeAll(bytes _s) internal {
         uint _length = _s.length;
         for(uint i = 0; i < extensions.length; i++) {
             if(extensionUsed[extensions[i]]) {
@@ -164,23 +184,23 @@ contract MultiSig {
     }
 
 
-    // this should delegate call to an extension to read the state 
-    // that was agreed upon either 
-    //  1. Coop case: State has both parties sigs with an agreement to close
-    //  2. Non-coop case: State has one sig
-    // no force pushing of state here due to state transitions resulting in value transfer
-    // it is conceivable that you could force an advantageous final state and ddos your counterparty
-    // this currently works with ether only. It should take a list of extenstions that need to be called
-    function _finalizeByzantine(bytes _s) internal {
-        address _meta = registry.resolveAddress(metachannel);
-        uint _length = _s.length;
-        for(uint i = 0; i < extensions.length; i++) {
-            if(extensionUsed[extensions[i]]) {
-                ExtensionInterface deployedExtension = ExtensionInterface(extensions[i]);
-                deployedExtension.delegatecall(bytes4(keccak256("finalizeByzantine(bytes, address)")), bytes32(32), bytes32(_length), _s, _meta);
-            }
-        }
-    }
+    // // this should delegate call to an extension to read the state 
+    // // that was agreed upon either 
+    // //  1. Coop case: State has both parties sigs with an agreement to close
+    // //  2. Non-coop case: State has one sig
+    // // no force pushing of state here due to state transitions resulting in value transfer
+    // // it is conceivable that you could force an advantageous final state and ddos your counterparty
+    // // this currently works with ether only. It should take a list of extenstions that need to be called
+    // function _finalizeByzantine(bytes _s) internal {
+    //     address _meta = registry.resolveAddress(metachannel);
+    //     uint _length = _s.length;
+    //     for(uint i = 0; i < extensions.length; i++) {
+    //         if(extensionUsed[extensions[i]]) {
+    //             ExtensionInterface deployedExtension = ExtensionInterface(extensions[i]);
+    //             deployedExtension.delegatecall(bytes4(keccak256("finalizeByzantine(bytes, address)")), bytes32(32), bytes32(_length), _s, _meta);
+    //         }
+    //     }
+    // }
 
     function _hasAllSigs(address _a, address _b) internal view returns (bool) {
         require(_a == partyA && _b == partyB, 'Signatures do not match parties in state');
