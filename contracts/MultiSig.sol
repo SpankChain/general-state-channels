@@ -10,7 +10,6 @@ import "./lib/extensions/ExtensionInterface.sol";
 // TODO: Timeout on init deposit return
 
 contract MultiSig {
-    //using EtherExtension for EtherExtension;
 
     string public constant NAME = "General State MultiSig";
     string public constant VERSION = "0.0.1";
@@ -44,33 +43,19 @@ contract MultiSig {
     //    721TokenID
     //    ...
     //
-    // Battle Arena Fighter State - Sector type [3]
-    //    arenaAddress
-    //    wagerEthBalanceA - top level balance in Ether, may be 0
-    //    wagerEthBalanceB
-    //    wagerTokenAddress
-    //    wagerTokenBalA
-    //    wagerTokenBalB
-    //
-    //    numFightersA - Start battle profile for A
-    //    fighterStatsA1 - Record owner of cat here, make final agreements based on battles
-    //    fighterStatsA2
-    //    ...
-    //
-    //    numFightersB - Start battle profile for B
-    //    fighterStatsB1
-    //    fighterStatsB2
-    //    ...
 
     // Extension modules act on final state agreements from the sub-channel outcomes
 
     address public partyA;
     address public partyB;
     bytes32 public metachannel; // Counterfactual address of metachannel
-    mapping(address => bool) extensionUsed;
-    address[4] extensions = [0x0, 0x0, 0x0, 0x0];
+    mapping(address => bool) public extensionUsed;
 
-    bool isOpen = false; // true when both parties have joined
+    // Require curated extensions to be used
+    address[3] public extensions = [0x0, 0x0, 0x0];
+
+    bool public isOpen = false; // true when both parties have joined
+    bool public isPending = false; // true when waiting for counterparty to join agreement
 
     function MultiSig(bytes32 _metachannel, address _registry) {
         require(_metachannel != 0x0, 'No metachannel CTF address provided to Msig constructor');
@@ -82,7 +67,9 @@ contract MultiSig {
     function openAgreement(bytes _state, address _ext, uint8 _v, bytes32 _r, bytes32 _s) public payable {
          // require the channel is not open yet
         require(isOpen == false, 'isOpen true, expected false in openAgreement()');
+        require(isPending == false, 'openAgreement already called, isPending true');
 
+        isPending = true;
         // check the account opening a channel signed the initial state
         address _initiator = _getSig(_state, _v, _r, _s);
 
@@ -102,6 +89,9 @@ contract MultiSig {
         // require the channel is not open yet
         require(isOpen == false);
 
+        // no longer allow joining functions to be called
+        isOpen = true;
+
         // check that the state is signed by the sender and sender is in the state
         address _joiningParty = _getSig(_state, _v, _r, _s);
 
@@ -114,8 +104,6 @@ contract MultiSig {
 
         // Set storage for state
         partyB = _joiningParty;
-        // no longer allow joining functions to be called
-        isOpen = true;
     }
 
     // Updates must be additive
