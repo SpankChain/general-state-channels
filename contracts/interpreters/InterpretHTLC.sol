@@ -163,8 +163,7 @@ contract InterpretHTLC is InterpreterInterface {
         // State
         // [0-31] isClose flag
         // [32-63] sequence
-        // [64-95] timeout // the longest timeout on all hashlocks, this should always be
-        // shorter than the possible length of channel timeout if brought on chain.
+        // [64-95] channelID
 
         // ie 
         //   channel timeout = 1000 ms

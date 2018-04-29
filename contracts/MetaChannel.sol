@@ -38,21 +38,24 @@ contract MetaChannel {
     CTFRegistry public registry; // Address of the CTF registry
     uint public settlementPeriodEnd; // The time when challenges are no longer accepted after
 
-    function InterpretMetaChannel(address _registry) {
-        require(_registry != 0x0);
+    function InterpretMetaChannel(address _registry, address _partyA, address _partyB) {
+        require(_partyA != 0x0 && _partyB != 0x0 && _registry != 0x0);
         registry = CTFRegistry(_registry);
+        partyA = _partyA;
+        partyB = _partyB;
     }
 
     // entry point for settlement of byzantine sub-channel
-    function startSettleStateSubchannel(uint _channelID, bytes _proof, bytes _state, bytes _subchannel, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
+    function startSettleStateSubchannel(bytes _proof, bytes _state, bytes _subchannel, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
         // check that this state is signed
         address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
         address _partyB = _getSig(_state, _v[1], _r[1], _s[1]);
 
-        // sub-channel state should be passed to the interpreter to decode
-        // we decode the overall state to get the agreed roothash of subchannels
-        // and other actionable state like timeout
-        _decodeState(_state);
+        uint _channelID = _getChannelID(_subchannel);
+
+        // get roothash
+        stateRoot = _getRoot(_state);
+
         require(_hasAllSigs(_partyA, _partyB));
 
         // sub-channel must be open
@@ -91,13 +94,16 @@ contract MetaChannel {
     // could just settle the sub-channels off chain until another dispute. In order to 
     // continue off chain the parties will have to update the timeout onchian with this setup
 
-    function challengeSettleStateSubchannel(uint _channelID, bytes _proof, bytes _state, bytes _subchannel, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
+    function challengeSettleStateSubchannel(bytes _proof, bytes _state, bytes _subchannel, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
         // check sigs
         address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
         address _partyB = _getSig(_state, _v[1], _r[1], _s[1]);
 
+        uint _channelID = _getChannelID(_subchannel);
+
         // get roothash
-        _decodeState(_state);
+        stateRoot = _getRoot(_state);
+
         require(_hasAllSigs(_partyA, _partyB));
 
         require(subChannels[_channelID].isSubInSettlementState == 1);
@@ -251,6 +257,12 @@ contract MetaChannel {
         }
     }
 
+    function _getChannelID(bytes _s) public returns (uint _id) {
+        assembly {
+            _id := mload(add(_s, 96))
+        }
+    }
+
     function isSequenceHigher(bytes _data, uint _nonce) public returns (bool) {
         uint isHigher1;
 
@@ -297,42 +309,20 @@ contract MetaChannel {
         return true;
     }
 
-    function _decodeState(bytes _state) internal {
+    function _getRoot(bytes _state) internal returns (bytes32 _root){
         // SPC State
         // [
         //    32 isClose
         //    64 sequence
-        //    96 timeout
-        //    128 address 1
-        //    160 address 2
-        //    192 balance 1
-        //    224 balance 2
-        //    256 sub-channel root hash
+        //    96 address 1
+        //    128 address 2
+        //    160 balance 1
+        //    192 balance 2
+        //    224 sub-channel root hash
 
-        address _addressA;
-        address _addressB;
-        // uint256 _balanceA;
-        // uint256 _balanceB;
-        uint256 _timeout;
-        bytes32 _root;
-
-        //uint _sequence;
-        uint _settlement;
-        //uint _intType;
         assembly {
-            _timeout := mload(add(_state, 96))
-            _addressA := mload(add(_state, 128))
-            _addressB := mload(add(_state, 160))
-            // _balanceA := mload(add(_state, 192))
-            // _balanceB := mload(add(_state, 224))
-            _root := mload(add(_state, 256))
+            _root := mload(add(_state, 224))
         }
-
-        partyA = _addressA;
-        partyB = _addressB;
-        // balanceA = _balanceA;
-        // balanceB = _balanceB;
-        stateRoot = _root;
     }
 
     function _getSig(bytes _d, uint8 _v, bytes32 _r, bytes32 _s) internal pure returns(address) {
