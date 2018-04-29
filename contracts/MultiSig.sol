@@ -49,9 +49,8 @@ contract MultiSig {
     address public partyA;
     address public partyB;
     bytes32 public metachannel; // Counterfactual address of metachannel
-    mapping(address => bool) public extensionUsed;
 
-    // Require curated extensions to be used
+    // Require curated extensions to be used.
     address[3] public extensions = [0x0, 0x0, 0x0];
 
     bool public isOpen = false; // true when both parties have joined
@@ -65,6 +64,7 @@ contract MultiSig {
     }
 
     function openAgreement(bytes _state, address _ext, uint8 _v, bytes32 _r, bytes32 _s) public payable {
+        require(_assertExtension(_ext));     
          // require the channel is not open yet
         require(isOpen == false, 'isOpen true, expected false in openAgreement()');
         require(isPending == false, 'openAgreement already called, isPending true');
@@ -80,12 +80,12 @@ contract MultiSig {
         // the open inerface can generalize an entry point for differenct kinds of checks 
         // on opening state
         deployedExtension.delegatecall(bytes4(keccak256("open(bytes, address)")), bytes32(32), bytes32(_length), _state, _initiator);
-        extensionUsed[_ext] = true;
 
         partyA = _initiator;
     }
 
     function joinAgreement(bytes _state, address _ext, uint8 _v, bytes32 _r, bytes32 _s) public payable {
+        require(_assertExtension(_ext));
         // require the channel is not open yet
         require(isOpen == false);
 
@@ -100,7 +100,6 @@ contract MultiSig {
         uint _length = _state.length;
         
         deployedExtension.delegatecall(bytes4(keccak256("join(bytes, address)")), bytes32(32), bytes32(_length), _state, _joiningParty);
-        extensionUsed[_ext] = true;
 
         // Set storage for state
         partyB = _joiningParty;
@@ -108,6 +107,7 @@ contract MultiSig {
 
     // Updates must be additive
     function depositState(bytes _state, address _ext, uint8[2] sigV, bytes32[2] sigR, bytes32[2] sigS) payable {
+        require(_assertExtension(_ext));
         require(isOpen == true, 'Tried adding state to a close msig wallet');
         address _partyA = _getSig(_state, sigV[0], sigR[0], sigS[0]);
         address _partyB = _getSig(_state, sigV[1], sigR[1], sigS[1]);
@@ -119,8 +119,7 @@ contract MultiSig {
 
         uint _length = _state.length;
 
-        deployedExtension.delegatecall(bytes4(keccak256("update(bytes, uint256)")), bytes32(32), bytes32(_length), _state);
-        extensionUsed[_ext] = true;
+        deployedExtension.delegatecall(bytes4(keccak256("update(bytes)")), bytes32(32), bytes32(_length), _state);
     }
 
     // needs to have settlement process to close the final balance
@@ -176,10 +175,8 @@ contract MultiSig {
     function _finalizeAll(bytes _s) internal {
         uint _length = _s.length;
         for(uint i = 0; i < extensions.length; i++) {
-            if(extensionUsed[extensions[i]]) {
-                ExtensionInterface deployedExtension = ExtensionInterface(extensions[i]);
-                deployedExtension.delegatecall(bytes4(keccak256("finalize(bytes)")), bytes32(32), bytes32(_length), _s);
-            }
+            ExtensionInterface deployedExtension = ExtensionInterface(extensions[i]);
+            deployedExtension.delegatecall(bytes4(keccak256("finalize(bytes)")), bytes32(32), bytes32(_length), _s);
         }
     }
 
@@ -201,6 +198,14 @@ contract MultiSig {
     //         }
     //     }
     // }
+
+    function _assertExtension(address _e) internal view returns (bool) {
+        bool _contained = false;
+        for(uint i=0; i<extensions.length; i++) {
+            if(extensions[i] == _e) { _contained == true; }
+        }
+        return _contained;
+    }
 
     function _hasAllSigs(address _a, address _b) internal view returns (bool) {
         require(_a == partyA && _b == partyB, 'Signatures do not match parties in state');
