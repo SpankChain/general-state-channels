@@ -110,7 +110,7 @@ contract MultiSig {
     }
 
 
-    // Updates must be additive
+    // additive updates of monetary state
     function depositState(bytes _state, address _ext, uint8[2] sigV, bytes32[2] sigR, bytes32[2] sigS) payable {
         require(_assertExtension(_ext));
         require(isOpen == true, 'Tried adding state to a close msig wallet');
@@ -165,6 +165,7 @@ contract MultiSig {
         isOpen = false;
     }
 
+    // Internal 
 
     function _finalizeAll(bytes _s) internal {
         uint _length = _s.length;

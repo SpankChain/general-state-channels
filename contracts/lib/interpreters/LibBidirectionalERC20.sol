@@ -11,9 +11,11 @@ contract LibBidirectionalERC20 is LibInterpreterInterface {
     // [96-127] bond 
     // [128-159] balance of receiver
 
-    address public specificToken;
-    function LibBidirectionalERC20(address _token) {
-        specificToken = _token;
+    // TODO: Update byte sequence
+    function getTokenAddress(bytes _s) public view returns (address _token) {
+        assembly {
+            _token := mload(add(_s, 224))
+        }
     }
 
     function finalizeState(bytes _state) public returns (bool) {
@@ -24,9 +26,11 @@ contract LibBidirectionalERC20 is LibInterpreterInterface {
 
         require(getTotal(_state) == getBalanceA(_state) + getBalanceB(_state));
 
-        // TODO import ERC20 token interfaces
-        //specificToken.transfer(partyA, _balA);
-        //specificToken.transfer(partyB, _balB);
+        HumanStandardToken _t = HumanStandardToken(getTokenAddress(_state));
+        require(getTotal(_state) == _t.balanceOf(this), 'tried finalizing token state that does not match bnded value');
+
+        _t.transfer(_a, getBalanceA(_state));
+        _t.transfer(_b, getBalanceB(_state));
     }
 
     function getPartyA(bytes _s) public constant returns(address _partyA) {

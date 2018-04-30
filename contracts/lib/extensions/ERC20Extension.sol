@@ -92,7 +92,7 @@ contract ERC20Extension is ExtensionInterface {
         address _b = getPartyB(_state);
 
         HumanStandardToken _t = HumanStandardToken(getTokenAddress(_state));
-        require(getTotal(_state) == _t.balanceOf(this), 'tried finalizing ether state that does not match bnded value');
+        require(getTotal(_state) == _t.balanceOf(this), 'tried finalizing token state that does not match bnded value');
 
         _t.transfer(_a, getBalanceA(_state));
         _t.transfer(_b, getBalanceB(_state));
