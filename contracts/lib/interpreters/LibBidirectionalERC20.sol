@@ -1,6 +1,7 @@
 pragma solidity ^0.4.23;
 
 import "./LibInterpreterInterface.sol";
+import "../token/HumanStandardToken.sol";
 
 contract LibBidirectionalERC20 is LibInterpreterInterface {
     // State

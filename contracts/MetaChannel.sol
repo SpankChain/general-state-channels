@@ -77,15 +77,6 @@ contract MetaChannel {
         state = _state;
     }
 
-    // No need for a consensus close on the SPC since it is only instantiated in 
-    // byzantine cases and just requires updating the state
-    // client side (update spc bond balances, updates number of channels open, remove
-    // closed channel state from total SPC state)
-
-    // could be a case where this gets instantiated because a game went byzantine but you 
-    // want to continue fast closing sub-channels against this contract. Though you
-    // could just settle the sub-channels off chain until another dispute. In order to 
-    // continue off chain the parties will have to update the timeout onchian with this setup
 
     function challengeSettleStateSubchannel(bytes _proof, bytes _state, bytes _subchannel, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
         // check sigs

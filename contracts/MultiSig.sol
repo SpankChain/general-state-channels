@@ -68,7 +68,7 @@ contract MultiSig {
         // only allow pre-deployed extension contracts
         require(_assertExtension(_ext));     
          // require the channel is not open yet
-        require(isOpen == false, 'isOpen true, expected false in openAgreement()');
+        require(isOpen == false, 'openAgreement already called, isOpen true');
         require(isPending == false, 'openAgreement already called, isPending true');
 
         isPending = true;
