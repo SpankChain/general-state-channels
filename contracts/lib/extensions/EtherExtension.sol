@@ -70,9 +70,6 @@ contract EtherExtension is ExtensionInterface {
         uint256 _total = getTotal(_state);
 
         require(this.balance + msg.value == _total);
-
-        // address _a = getPartyA(_state);
-        // address _b = getPartyB(_state);
     }
 
     function finalizeByzantine(bytes _state, address _metachannel) public view returns (bool) {

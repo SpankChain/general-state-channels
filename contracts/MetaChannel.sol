@@ -14,7 +14,6 @@ contract MetaChannel {
         uint isSubInSettlementState;
         uint subSequence;
         uint lockedNonce;
-        bytes32 lockroot;
         address[2] participants;
         bytes32 CTFaddress;
         uint subSettlementPeriodLength;
@@ -29,7 +28,6 @@ contract MetaChannel {
     address public partyB; // Address of second channel participant
     uint public settlementPeriodLength; // How long challengers have to reply to settle engagement
     bytes32 public stateRoot; // The merkle root of all sub-channel state
-    bytes32 public stateHash; // Hash of entire state
     uint public isClosed;
     bytes public state;
     uint public sequence = 0;
@@ -68,10 +66,6 @@ contract MetaChannel {
         // do proof of inclusing in of sub-channel state in root state
         require(_isContained(_stateHash, _proof, stateRoot));
 
-        //InterpreterInterface deployedInterpreter = InterpreterInterface(registry.resolveAddress(subChannels[_channelID].CTFaddress));
-        // this interprets the agreed upon state and sets its storage (currently in both the meta and subchannel)
-        //deployedInterpreter.initState(_subchannel);
-
         // consider running some logic on the state from the interpreter to validate 
         // the new state obeys transition rules
 
@@ -79,7 +73,6 @@ contract MetaChannel {
 
         subChannels[_channelID].isSubInSettlementState = 1;
         subChannels[_channelID].subSettlementPeriodEnd = now + subChannels[_channelID].subSettlementPeriodLength;
-        stateHash = keccak256(_state);
         subChannels[_channelID].subState = _subchannel;
         state = _state;
     }
@@ -112,12 +105,7 @@ contract MetaChannel {
         bytes32 _stateHash = keccak256(_subchannel);
         require(_isContained(_stateHash, _proof, stateRoot));
 
-        //InterpreterInterface deployedInterpreter = InterpreterInterface(registry.resolveAddress(subChannels[_channelID].CTFaddress));
-        // since the initial bytes of the state are the same in subchannel as metachannel, we could reuse the isSequenceHigher here
         require(isSequenceHigher(_subchannel, subChannels[_channelID].subSequence));
-        
-        // store the new sub-channel state in the interpreter
-        //deployedInterpreter.initState(_subchannel);
 
         subChannels[_channelID].CTFaddress = _getCTFaddress(_subchannel);
         // extend the challenge time for the sub-channel
@@ -129,44 +117,21 @@ contract MetaChannel {
     // in the case of HTLC sub-channels, this must be called after the subchannel interpreter
     // has had enough time to play out the locked txs and update is balances
     function closeWithTimeoutSubchannel(uint _channelID) public {
-        // These interpreter libraries don't need to be redeployed each time, just replace state
-        // with an identifier as to which lib address to use
+        // Since interpreters are libraries, we don't need to coutnerfactually instantiate them
         LibInterpreterInterface deployedInterpreter = LibInterpreterInterface(registry.resolveAddress(subChannels[_channelID].CTFaddress));
 
         require(subChannels[_channelID].subSettlementPeriodEnd <= now);
         require(subChannels[_channelID].isSubClose == 0);
         require(subChannels[_channelID].isSubInSettlementState == 1);
 
-        // this may not be needed since initState is called for every challenge
-        // for htlc channels, the client just needs to be sure that for any individual
-        // tx timeout, that the individual timeout is shorter than the channel timeout.
-
-        //deployedInterpreter.finalizeState(subChannels[_channelID].subState);
         uint _length = subChannels[_channelID].subState.length;
         deployedInterpreter.delegatecall(bytes4(keccak256("finalizeState(bytes)")), bytes32(32), bytes32(_length), subChannels[_channelID].subState);
-
-        // update the meta-channel state for balance
-        // TODO: generalize this to just STATE for the msig extension to read
-        // just leave the state stored in the subchannel contract, and interpret it
-        // via the msig
-        // put the action of reconciling subchannel state and top state bytes in the interpreter
-        //balanceA += deployedInterpreter.balanceA();
-        //balanceB += deployedInterpreter.balanceB();
-        
-        // maybe do this in the metachannel
-        //_reconcileState(deployedInterpreter.getExtType());
-
-        // GET interpreter library type
-        // send funds that are now stored on the metachannel
 
         subChannels[_channelID].isSubClose = 1;
         subChannels[_channelID].isSubInSettlementState == 0;
     }
 
-    // TODO: Fix this, have it just take the channel id like close, but this time for htlc it will
-    // read all of these params off of the htlc state and run its inclusion proof in there.
-    //function update(uint _channelID)
-    //  delegate a call now to update and do all of these checks
+
     function updateHTLCBalances(bytes _proof, uint _channelID, uint256 _lockedNonce, uint256 _amount, bytes32 _hash, uint256 _timeout, bytes32 _secret) public returns (bool) {
         require(subChannels[_channelID].isSubInSettlementState == 0);
         require(subChannels[_channelID].isSubClose == 1);
@@ -174,22 +139,17 @@ contract MetaChannel {
         require(now < _timeout);
         // be sure the tx nonce lines up with the interpreters sequence
         require(_lockedNonce == subChannels[_channelID].lockedNonce);
+
+        bytes32 _lockRoot = _getRoot(subChannels[_channelID].subState);
         
         bytes32 _txHash = keccak256(_lockedNonce, _amount, _hash, _timeout);
-        require(_isContained(_txHash, _proof, subChannels[_channelID].lockroot));
+        require(_isContained(_txHash, _proof, _lockRoot));
 
         // no need to refund?, just don't update the state balance
 
         // redeem case
         require(keccak256(_secret) == _hash);
-        // assume one direction payment channel
-        // TODO: Make a balances array that maps the index of the array to the sequence
-        // number of the subchannel state holding the lockroot, this way balances will revert
-        // and build upon the checkpointed state, resetting if a higher sequence agreement is 
-        // presented. NOYE this is okay since the challenge function in the meta channel
-        // calls initState again with the updated agreed balances before lockroot apply.
-        // thus the balances state here would get reset if a challenge updates with a higher
-        // subchannel sequence
+
         LibInterpreterInterface deployedInterpreter = LibInterpreterInterface(registry.resolveAddress(subChannels[_channelID].CTFaddress));
         uint _length = subChannels[_channelID].subState.length;
         deployedInterpreter.delegatecall(bytes4(keccak256("update(address, uint256)")), partyB, _amount);
@@ -201,53 +161,44 @@ contract MetaChannel {
 
     // /// --- Close Meta Channel Functions
 
-    // function startSettle(bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
-    //     address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
-    //     address _partyB = _getSig(_state, _v[1], _r[1], _s[1]);
+    function startSettle(bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
+        address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
+        address _partyB = _getSig(_state, _v[1], _r[1], _s[1]);
 
-    //     require(_hasAllSigs(_partyA, _partyB));
+        require(_hasAllSigs(_partyA, _partyB));
 
-    //     _decodeState(_state);
+        require(isClosed == 0);
+        require(isInSettlementState == 0);
 
-    //     require(isClosed == 0);
-    //     require(isInSettlementState == 0);
+        state = _state;
 
-    //     state = _state;
+        isInSettlementState = 1;
+        settlementPeriodEnd = now + settlementPeriodLength;
+    }
 
-    //     isInSettlementState = 1;
-    //     settlementPeriodEnd = now + settlementPeriodLength;
-    // }
+    function challengeSettle(bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
+        address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
+        address _partyB = _getSig(_state, _v[1], _r[1], _s[1]);
 
-    // function challengeSettle(bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
-    //     address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
-    //     address _partyB = _getSig(_state, _v[1], _r[1], _s[1]);
+        require(_hasAllSigs(_partyA, _partyB));
 
-    //     require(_hasAllSigs(_partyA, _partyB));
+        require(isInSettlementState == 1);
+        require(settlementPeriodEnd <= now);
 
-    //     // require the channel to be in a settling state
-    //     _decodeState(_state);
-    //     require(isInSettlementState == 1);
-    //     require(settlementPeriodEnd <= now);
+        isSequenceHigher(_state, sequence);
 
-    //     isSequenceHigher(_state, sequence);
+        settlementPeriodEnd = now + settlementPeriodLength;
+        state = _state;
+        sequence++;
+    }
 
-    //     settlementPeriodEnd = now + settlementPeriodLength;
-    //     state = _state;
-    //     sequence++;
-    // }
+    function closeWithTimeout() public {
+        require(settlementPeriodEnd <= now);
+        require(isClosed == 0);
+        require(isInSettlementState == 1);
 
-    // function closeWithTimeout() public {
-    //     require(settlementPeriodEnd <= now);
-    //     require(isClosed == 0);
-    //     require(isInSettlementState == 1);
-
-    //     _decodeState(state);
-    //     // TODO: Do same extension system here as msig so
-    //     // that all remain state that hasn't been used in a subchannel may be redistributed back
-    //     // to the main chain
-    //     stateHash = keccak256(state);
-    //     isClosed = 1;
-    // }
+        isClosed = 1;
+    }
 
     // Internal Functions
     function _getCTFaddress(bytes _s) public returns (bytes32 _ctf) {
@@ -346,7 +297,6 @@ contract MetaChannel {
         uint isSubInSettlementState,
         uint subSequence,
         uint lockedNonce,
-        bytes32 lockroot,
         address[2] participants,
         bytes32 subCTFaddress,
         uint subSettlementPeriodLength,
@@ -359,7 +309,6 @@ contract MetaChannel {
             g.isSubInSettlementState,
             g.subSequence,
             g.lockedNonce,
-            g.lockroot,
             g.participants,
             g.CTFaddress,
             g.subSettlementPeriodLength,
