@@ -167,7 +167,7 @@ contract MetaChannel {
     // read all of these params off of the htlc state and run its inclusion proof in there.
     //function update(uint _channelID)
     //  delegate a call now to update and do all of these checks
-    function updateHTLCBalances(uint _channelID, bytes _proof, uint256 _lockedNonce, uint256 _amount, bytes32 _hash, uint256 _timeout, bytes _secret) public returns (bool) {
+    function updateHTLCBalances(bytes _proof, uint _channelID, uint256 _lockedNonce, uint256 _amount, bytes32 _hash, uint256 _timeout, bytes32 _secret) public returns (bool) {
         require(subChannels[_channelID].isSubInSettlementState == 0);
         require(subChannels[_channelID].isSubClose == 1);
         // require that the transaction timeout has not expired
@@ -198,7 +198,6 @@ contract MetaChannel {
 
         return true;
     }
-
 
     // /// --- Close Meta Channel Functions
 

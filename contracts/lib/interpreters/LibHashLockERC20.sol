@@ -1,7 +1,7 @@
 pragma solidity ^0.4.23;
 
 import "./LibInterpreterInterface.sol";
-// TODO get token interface
+import "../token/HumanStandardToken.sol";
 
 contract LibHashLockERC20 is LibInterpreterInterface {
     // State
@@ -16,19 +16,15 @@ contract LibHashLockERC20 is LibInterpreterInterface {
     // [256-287] lockTXroot
     // [288-319] metachannelAddress
 
-    address public specificToken;
-
-    function LibHTLCtoken(address _token) {
-        specificToken = _token;
-    }
-
     function finalizeState(bytes _s) returns (bool) {
         // Just dont send here, force the balace to be withdrawn from
         // a special function on the metachannel
     }
 
-    function update(address _b, uint256 _a) returns (bool) {
-        // send ether balance
-        //specificToken.transfer(_b, _a);
+    function updateHTLCtoken(address _b, uint256 _a, address _token) returns (bool) {
+        // send token balance
+        HumanStandardToken specificToken = HumanStandardToken(_token);
+        require(specificToken.balanceOf(this) >= _a);
+        specificToken.transfer(_b, _a);
     }
 }

@@ -144,15 +144,15 @@ contract MultiSig {
         // deployedExtension.delegatecall(bytes4(keccak256("finalize(bytes)")), bytes32(32), bytes32(_length), _state);
     }
 
-    function updateSubchannel(uint _channelID) public {
+    function updateHTLCSubchannel(uint _channelID, bytes _proof, uint256 _lockedNonce, uint256 _amount, bytes32 _hash, uint256 _timeout, bytes32 _secret) public {
         MetaChannel deployedMetaChannel = MetaChannel(registry.resolveAddress(metachannel));
 
         //var(a,b,c,d,e,f,g,h,i) = deployedMetaChannel.getSubChannel(_channelID);
 
         // require the subchannel is closed
         //require(a == 1);
-
-        deployedMetaChannel.delegatecall(bytes4(keccak256("updateHTLCBalances(uint)")), _channelID);
+        uint _l = _proof.length;
+        deployedMetaChannel.delegatecall(bytes4(keccak256("updateHTLCBalances(bytes, uint, uint256, uint256, bytes32, uint256, bytes32)")), bytes32(32), bytes32(_l), _proof, _channelID, _lockedNonce, _amount, _hash, _timeout, _secret);
         
         // uint _length = _state.length;
         // ExtensionInterface deployedExtension = ExtensionInterface(_ext);
