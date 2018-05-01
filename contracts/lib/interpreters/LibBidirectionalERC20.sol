@@ -12,52 +12,47 @@ contract LibBidirectionalERC20 is LibInterpreterInterface {
     // [128-159] balance of receiver
 
     // TODO: Update byte sequence
-    function getTokenAddress(bytes _s) public view returns (address _token) {
+    function getTokenAddress(bytes _s) public pure returns (address _token) {
         assembly {
             _token := mload(add(_s, 224))
         }
     }
 
     function finalizeState(bytes _state) public returns (bool) {
-        address _a = getPartyA(_state);
-        address _b = getPartyB(_state);
-        uint256 _balA = getBalanceA(_state);
-        uint256 _balB = getBalanceB(_state);
-
         require(getTotal(_state) == getBalanceA(_state) + getBalanceB(_state));
 
         HumanStandardToken _t = HumanStandardToken(getTokenAddress(_state));
         require(getTotal(_state) == _t.balanceOf(this), 'tried finalizing token state that does not match bnded value');
 
-        _t.transfer(_a, getBalanceA(_state));
-        _t.transfer(_b, getBalanceB(_state));
+        _t.transfer(getPartyA(_state), getBalanceA(_state));
+        _t.transfer(getPartyB(_state), getBalanceB(_state));
     }
 
-    function getPartyA(bytes _s) public constant returns(address _partyA) {
+    function getPartyA(bytes _s) public pure returns(address _partyA) {
         assembly {
             _partyA := mload(add(_s, 96))
         }
     }
 
-    function getPartyB(bytes _s) public constant returns(address _partyB) {
+    function getPartyB(bytes _s) public pure returns(address _partyB) {
         assembly {
             _partyB := mload(add(_s, 96))
         }
     }
 
-    function getBalanceA(bytes _s) public constant returns(uint256 _balanceA) {
+    function getBalanceA(bytes _s) public pure returns(uint256 _balanceA) {
         assembly {
             _balanceA := mload(add(_s, 160))
         }
     }
 
-    function getBalanceB(bytes _s) public constant returns(uint256 _balanceB) {
+    function getBalanceB(bytes _s) public pure returns(uint256 _balanceB) {
         assembly {
             _balanceB := mload(add(_s, 192))
         }
     }
 
-    function getTotal(bytes _s) public constant returns(uint256) {
+    function getTotal(bytes _s) public pure returns(uint256) {
         uint256 _a;
         uint256 _b;
 

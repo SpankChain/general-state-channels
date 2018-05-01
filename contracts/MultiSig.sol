@@ -56,7 +56,7 @@ contract MultiSig {
     bool public isOpen = false; // true when both parties have joined
     bool public isPending = false; // true when waiting for counterparty to join agreement
 
-    function MultiSig(bytes32 _metachannel, address _registry) {
+    constructor(bytes32 _metachannel, address _registry) {
         require(_metachannel != 0x0, 'No metachannel CTF address provided to Msig constructor');
         require(_registry != 0x0, 'No CTF Registry address provided to Msig constructor');
         metachannel = _metachannel;
@@ -81,7 +81,7 @@ contract MultiSig {
 
         // the open inerface can generalize an entry point for differenct kinds of checks 
         // on opening state
-        deployedExtension.delegatecall(bytes4(keccak256("open(bytes, address)")), bytes32(32), bytes32(_length), _state, _initiator);
+        require(address(deployedExtension).delegatecall(bytes4(keccak256("open(bytes, address)")), bytes32(32), bytes32(_length), _state, _initiator));
 
         partyA = _initiator;
     }
@@ -103,7 +103,7 @@ contract MultiSig {
 
         uint _length = _state.length;
         
-        deployedExtension.delegatecall(bytes4(keccak256("join(bytes, address)")), bytes32(32), bytes32(_length), _state, _joiningParty);
+        require(address(deployedExtension).delegatecall(bytes4(keccak256("join(bytes, address)")), bytes32(32), bytes32(_length), _state, _joiningParty));
 
         // Set storage for state
         partyB = _joiningParty;
@@ -111,7 +111,7 @@ contract MultiSig {
 
 
     // additive updates of monetary state
-    function depositState(bytes _state, address _ext, uint8[2] sigV, bytes32[2] sigR, bytes32[2] sigS) payable {
+    function depositState(bytes _state, address _ext, uint8[2] sigV, bytes32[2] sigR, bytes32[2] sigS) public payable {
         require(_assertExtension(_ext));
         require(isOpen == true, 'Tried adding state to a close msig wallet');
         address _partyA = _getSig(_state, sigV[0], sigR[0], sigS[0]);
@@ -124,14 +124,14 @@ contract MultiSig {
 
         uint _length = _state.length;
 
-        deployedExtension.delegatecall(bytes4(keccak256("update(bytes)")), bytes32(32), bytes32(_length), _state);
+        require(address(deployedExtension).delegatecall(bytes4(keccak256("update(bytes)")), bytes32(32), bytes32(_length), _state));
     }
 
 
     function closeSubchannel(uint _channelID) public {
         MetaChannel deployedMetaChannel = MetaChannel(registry.resolveAddress(metachannel));
 
-        deployedMetaChannel.delegatecall(bytes4(keccak256("closeWithTimeoutSubchannel(uint)")), _channelID);
+        require(address(deployedMetaChannel).delegatecall(bytes4(keccak256("closeWithTimeoutSubchannel(uint)")), _channelID));
     }
 
 
@@ -139,7 +139,7 @@ contract MultiSig {
         MetaChannel deployedMetaChannel = MetaChannel(registry.resolveAddress(metachannel));
 
         uint _l = _proof.length;
-        deployedMetaChannel.delegatecall(bytes4(keccak256("updateHTLCBalances(bytes, uint, uint256, uint256, bytes32, uint256, bytes32)")), bytes32(32), bytes32(_l), _proof, _channelID, _lockedNonce, _amount, _hash, _timeout, _secret);
+        require(address(deployedMetaChannel).delegatecall(bytes4(keccak256("updateHTLCBalances(bytes, uint, uint256, uint256, bytes32, uint256, bytes32)")), bytes32(32), bytes32(_l), _proof, _channelID, _lockedNonce, _amount, _hash, _timeout, _secret));
     }
 
 
@@ -171,7 +171,7 @@ contract MultiSig {
         uint _length = _s.length;
         for(uint i = 0; i < extensions.length; i++) {
             ExtensionInterface deployedExtension = ExtensionInterface(extensions[i]);
-            deployedExtension.delegatecall(bytes4(keccak256("finalize(bytes)")), bytes32(32), bytes32(_length), _s);
+            require(address(deployedExtension).delegatecall(bytes4(keccak256("finalize(bytes)")), bytes32(32), bytes32(_length), _s));
         }
     }
 

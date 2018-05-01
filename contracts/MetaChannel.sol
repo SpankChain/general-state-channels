@@ -36,7 +36,7 @@ contract MetaChannel {
     CTFRegistry public registry; // Address of the CTF registry
     uint public settlementPeriodEnd; // The time when challenges are no longer accepted after
 
-    function InterpretMetaChannel(address _registry, address _partyA, address _partyB) {
+    constructor(address _registry, address _partyA, address _partyB) {
         require(_partyA != 0x0 && _partyB != 0x0 && _registry != 0x0);
         registry = CTFRegistry(_registry);
         partyA = _partyA;
@@ -96,7 +96,7 @@ contract MetaChannel {
         bytes32 _stateHash = keccak256(_subchannel);
         require(_isContained(_stateHash, _proof, stateRoot));
 
-        require(isSequenceHigher(_subchannel, subChannels[_channelID].subSequence));
+        require(_isSequenceHigher(_subchannel, subChannels[_channelID].subSequence));
 
         subChannels[_channelID].CTFaddress = _getCTFaddress(_subchannel);
         // extend the challenge time for the sub-channel
@@ -116,7 +116,7 @@ contract MetaChannel {
         require(subChannels[_channelID].isSubInSettlementState == 1);
 
         uint _length = subChannels[_channelID].subState.length;
-        deployedInterpreter.delegatecall(bytes4(keccak256("finalizeState(bytes)")), bytes32(32), bytes32(_length), subChannels[_channelID].subState);
+        require(address(deployedInterpreter).delegatecall(bytes4(keccak256("finalizeState(bytes)")), bytes32(32), bytes32(_length), subChannels[_channelID].subState));
 
         subChannels[_channelID].isSubClose = 1;
         subChannels[_channelID].isSubInSettlementState == 0;
@@ -142,8 +142,7 @@ contract MetaChannel {
         require(keccak256(_secret) == _hash);
 
         LibInterpreterInterface deployedInterpreter = LibInterpreterInterface(registry.resolveAddress(subChannels[_channelID].CTFaddress));
-        uint _length = subChannels[_channelID].subState.length;
-        deployedInterpreter.delegatecall(bytes4(keccak256("update(address, uint256)")), partyB, _amount);
+        require(address(deployedInterpreter).delegatecall(bytes4(keccak256("update(address, uint256)")), partyB, _amount));
 
         subChannels[_channelID].lockedNonce++;
 
@@ -176,7 +175,7 @@ contract MetaChannel {
         require(isInSettlementState == 1);
         require(settlementPeriodEnd <= now);
 
-        isSequenceHigher(_state, sequence);
+        _isSequenceHigher(_state, sequence);
 
         settlementPeriodEnd = now + settlementPeriodLength;
         state = _state;
@@ -192,19 +191,19 @@ contract MetaChannel {
     }
 
     // Internal Functions
-    function _getCTFaddress(bytes _s) public returns (bytes32 _ctf) {
+    function _getCTFaddress(bytes _s) public pure  returns (bytes32 _ctf) {
         assembly {
             _ctf := mload(add(_s, 64))
         }
     }
 
-    function _getChannelID(bytes _s) public returns (uint _id) {
+    function _getChannelID(bytes _s) public pure returns (uint _id) {
         assembly {
             _id := mload(add(_s, 96))
         }
     }
 
-    function isSequenceHigher(bytes _data, uint _nonce) public returns (bool) {
+    function _isSequenceHigher(bytes _data, uint _nonce) public pure returns (bool) {
         uint isHigher1;
 
         assembly {
@@ -216,18 +215,7 @@ contract MetaChannel {
     }
 
 
-    function isClose(bytes _data) public returns(bool) {
-        uint _isClosed;
-
-        assembly {
-            _isClosed := mload(add(_data, 32))
-        }
-
-        require(_isClosed == 1);
-        return true;
-    }
-
-    function _isContained(bytes32 _hash, bytes _proof, bytes32 _root) internal returns (bool) {
+    function _isContained(bytes32 _hash, bytes _proof, bytes32 _root) internal pure returns (bool) {
         bytes32 cursor = _hash;
         bytes32 proofElem;
 
@@ -250,7 +238,7 @@ contract MetaChannel {
         return true;
     }
 
-    function _getRoot(bytes _state) internal returns (bytes32 _root){
+    function _getRoot(bytes _state) internal pure returns (bytes32 _root){
         // SPC State
         // [
         //    32 isClose

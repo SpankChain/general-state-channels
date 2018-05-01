@@ -11,42 +11,37 @@ contract LibBidirectionalEther is LibInterpreterInterface {
     // [128-159] balance of receiver
 
     function finalizeState(bytes _state) public returns (bool) {
-        address _a = getPartyA(_state);
-        address _b = getPartyB(_state);
-        uint256 _balA = getBalanceA(_state);
-        uint256 _balB = getBalanceB(_state);
-
         require(getTotal(_state) == getBalanceA(_state) + getBalanceB(_state));
 
-        _a.transfer(_balA);
-        _b.transfer(_balB);
+        getPartyA(_state).transfer(getBalanceA(_state));
+        getPartyB(_state).transfer(getBalanceB(_state));
     }
 
-    function getPartyA(bytes _s) public constant returns(address _partyA) {
+    function getPartyA(bytes _s) public pure returns(address _partyA) {
         assembly {
             _partyA := mload(add(_s, 96))
         }
     }
 
-    function getPartyB(bytes _s) public constant returns(address _partyB) {
+    function getPartyB(bytes _s) public pure returns(address _partyB) {
         assembly {
             _partyB := mload(add(_s, 96))
         }
     }
 
-    function getBalanceA(bytes _s) public constant returns(uint256 _balanceA) {
+    function getBalanceA(bytes _s) public pure returns(uint256 _balanceA) {
         assembly {
             _balanceA := mload(add(_s, 160))
         }
     }
 
-    function getBalanceB(bytes _s) public constant returns(uint256 _balanceB) {
+    function getBalanceB(bytes _s) public pure returns(uint256 _balanceB) {
         assembly {
             _balanceB := mload(add(_s, 192))
         }
     }
 
-    function getTotal(bytes _s) public constant returns(uint256) {
+    function getTotal(bytes _s) public pure returns(uint256) {
         uint256 _a;
         uint256 _b;
 

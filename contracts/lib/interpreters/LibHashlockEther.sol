@@ -15,12 +15,13 @@ contract LibHashlockEther is LibInterpreterInterface {
     // [256-287] lockTXroot
     // [288-319] metachannelAddress
 
-    function finalizeState(bytes _s) returns (bool) {
+    function finalizeState(bytes _s) public returns (bool) {
         // Just dont send here, force the balace to be withdrawn from
         // a special function on the metachannel
+        return true;
     }
 
-    function update(address _b, uint256 _a) returns (bool) {
+    function update(address _b, uint256 _a) public returns (bool) {
         // send ether balance
         _b.transfer(_a);
     }

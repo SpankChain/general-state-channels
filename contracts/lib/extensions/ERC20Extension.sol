@@ -5,37 +5,37 @@ import "../token/HumanStandardToken.sol";
 
 contract ERC20Extension is ExtensionInterface {
     // TODO: Update byte sequence
-    function getTokenAddress(bytes _s) public view returns (address _token) {
+    function getTokenAddress(bytes _s) public pure returns (address _token) {
         assembly {
             _token := mload(add(_s, 224))
         }
     }
 
-    function getPartyA(bytes _s) public view returns(address _partyA) {
+    function getPartyA(bytes _s) public pure returns(address _partyA) {
         assembly {
             _partyA := mload(add(_s, 96))
         }
     }
 
-    function getPartyB(bytes _s) public view returns(address _partyB) {
+    function getPartyB(bytes _s) public pure returns(address _partyB) {
         assembly {
             _partyB := mload(add(_s, 96))
         }
     }
 
-    function getBalanceA(bytes _s) public view returns(uint256 _balanceA) {
+    function getBalanceA(bytes _s) public pure returns(uint256 _balanceA) {
         assembly {
             _balanceA := mload(add(_s, 160))
         }
     }
 
-    function getBalanceB(bytes _s) public view returns(uint256 _balanceB) {
+    function getBalanceB(bytes _s) public pure returns(uint256 _balanceB) {
         assembly {
             _balanceB := mload(add(_s, 192))
         }
     }
 
-    function getTotal(bytes _s) public view returns(uint256) {
+    function getTotal(bytes _s) public pure returns(uint256) {
         uint256 _a;
         uint256 _b;
 
@@ -48,7 +48,7 @@ contract ERC20Extension is ExtensionInterface {
         return _a + _b;
     }
 
-    function open(bytes _state, address _initiator) public view returns (bool) {
+    function open(bytes _state, address _initiator) public returns (bool) {
         require(_initiator == getPartyA(_state), 'Party A does not mactch signature recovery');
         // get the token instance used to allow funds to msig
         HumanStandardToken _t = HumanStandardToken(getTokenAddress(_state));
@@ -59,7 +59,7 @@ contract ERC20Extension is ExtensionInterface {
         return true;
     }
 
-    function join(bytes _state, address _responder) public view returns (bool) {
+    function join(bytes _state, address _responder) public returns (bool) {
         // ensure the amount sent to join channel matches the signed state balance
         require(_responder == getPartyB(_state), 'Party B does not mactch signature recovery');
         // get the token instance used to allow funds to msig
@@ -74,7 +74,7 @@ contract ERC20Extension is ExtensionInterface {
         require(getTotal(_state) == _t.balanceOf(this), 'token total deposited does not match state balance');
     }
 
-    function update(bytes _state) public view returns (bool) {
+    function update(bytes _state) public returns (bool) {
         // get the token instance used to allow funds to msig
         HumanStandardToken _t = HumanStandardToken(getTokenAddress(_state));
 
@@ -87,7 +87,7 @@ contract ERC20Extension is ExtensionInterface {
         require(getTotal(_state) == _t.balanceOf(this), 'token total deposited does not match state balance');
     }
 
-    function finalizeByzantine(bytes _state) public view returns (bool) {
+    function finalizeByzantine(bytes _state) public returns (bool) {
         address _a = getPartyA(_state);
         address _b = getPartyB(_state);
 

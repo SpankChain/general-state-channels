@@ -19,9 +19,10 @@ contract LibHashLockERC20 is LibInterpreterInterface {
     function finalizeState(bytes _s) returns (bool) {
         // Just dont send here, force the balace to be withdrawn from
         // a special function on the metachannel
+        return true;
     }
 
-    function updateHTLCtoken(address _b, uint256 _a, address _token) returns (bool) {
+    function updateHTLCtoken(address _b, uint256 _a, address _token) public returns (bool) {
         // send token balance
         HumanStandardToken specificToken = HumanStandardToken(_token);
         require(specificToken.balanceOf(this) >= _a);
