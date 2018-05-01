@@ -1,1 +1,0 @@
-import "../ChannelRegistry.sol";

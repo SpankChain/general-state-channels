@@ -1,6 +1,6 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.23;
 
-contract ChannelRegistry {
+contract CTFRegistry {
     mapping(bytes32 => address) registry;
     bytes public _code;
     uint public len;
@@ -17,8 +17,11 @@ contract ChannelRegistry {
         //bytes32 _CTFaddress = keccak256(_sigs);
         //bytes32 _CTFaddress = keccak256(_r[0], _s[0], _v[0], _r[1], _s[1], _v[1]);
 
-        var (a, b) = _decodeAddresses(_state);
-        var (c) = _decodeContractCode(_state);
+        address a;
+        address b;
+        bytes memory c;
+        (a, b) = _decodeAddresses(_state);
+        (c) = _decodeContractCode(_state);
 
         address deployedAddress;
         assembly {
@@ -39,10 +42,10 @@ contract ChannelRegistry {
         //require(a == partyA && b == partyB);
         
         registry[_CTFaddress] = deployedAddress;
-        ContractDeployed(deployedAddress);
+        emit ContractDeployed(deployedAddress);
     }
 
-    function _decodeAddresses(bytes _state) internal returns(address A, address B){
+    function _decodeAddresses(bytes _state) internal pure returns(address A, address B){
         // State
         // [32] address A
         // [64] address B
@@ -55,7 +58,7 @@ contract ChannelRegistry {
         }
     }
 
-    function _decodeContractCode(bytes _state) internal returns(bytes){
+    function _decodeContractCode(bytes _state) internal pure returns(bytes){
         uint _length = _state.length;
         uint _newlength = _length - 96;
         bytes memory output = new bytes(_newlength);

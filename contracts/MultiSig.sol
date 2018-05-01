@@ -1,8 +1,8 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.23;
 
-import "./ChannelRegistry.sol";
-import "./interpreters/InterpreterInterface.sol";
-import "./extensions/ExtensionInterface.sol";
+import "./CTFRegistry.sol";
+import "./MetaChannel.sol";
+import "./lib/extensions/ExtensionInterface.sol";
 
 /// @title SpankChain General-State-Channel - A multisignature "wallet" for general state
 /// @author Nathan Ginnever - <ginneversource@gmail.com>
@@ -14,7 +14,7 @@ contract MultiSig {
     string public constant NAME = "General State MultiSig";
     string public constant VERSION = "0.0.1";
 
-    ChannelRegistry public registry;
+    CTFRegistry public registry;
 
     // STATE
     //    32 isClose - Cooperative close flag
@@ -23,144 +23,174 @@ contract MultiSig {
     //    128 address 2
     //    160 Meta Channel CTF address
     //    192 Sub-Channel Root Hash
-    //    225+ General State
-
-    // General State - Extensions must be able to handle these format
-    // Ether Balances
+    //
+    // General State Sectors - Extensions must be able to handle these format
+    // Sectors represent the final state of channels.
+    //
+    // Ether Balances - Sector type [0]
     //    EthBalanceA
     //    EthBalanceB
     //
-    // Token Balances
+    // Token Balances - Sector type [1]
+    //    numTokenTypes
+    //    tokenAddress
     //    ERC20BalanceA
     //    ERC20BalanceB
+    //    ...
     //
-    // "Non-fungile" Objects
-    //    Num721Objects
+    // "Non-fungile" Objects - Sector type [2]
+    //    num721Objects
     //    721TokenID
     //    ...
     //
-    // Battle Arena Fighter State
-    //    Battle Arena State
-    //    FighterStatsA
-    //    FighterStatsB
 
-    // Decoder modules act on final state agreements from the sub-channel outcomes
+    // Extension modules act on final state agreements from the sub-channel outcomes
 
-    uint256 sequence;
     address public partyA;
     address public partyB;
-    uint256 public balanceA;
-    uint256 public balanceB;
-    bytes32 interpreter;
+    bytes32 public metachannel; // Counterfactual address of metachannel
 
-    bytes state;
+    // Require curated extensions to be used.
+    address[3] public extensions = [0x0, 0x0, 0x0];
 
-    uint256 bonded;
-    bool isOpen = false;
+    bool public isOpen = false; // true when both parties have joined
+    bool public isPending = false; // true when waiting for counterparty to join agreement
 
-    event ChannelCreated(bytes32 channelId, address indexed initiator);
-    event ChannelJoined(bytes32 channelId, address indexed joiningParty);
-
-    function MultiSig(bytes32 _interpreter, address _registry) {
-        require(_interpreter != 0x0);
-        require(_registry != 0x0);
-        interpreter = _interpreter;
-        registry = ChannelRegistry(_registry);
+    constructor(bytes32 _metachannel, address _registry) {
+        require(_metachannel != 0x0, 'No metachannel CTF address provided to Msig constructor');
+        require(_registry != 0x0, 'No CTF Registry address provided to Msig constructor');
+        metachannel = _metachannel;
+        registry = CTFRegistry(_registry);
     }
 
-    // Consider one function with both sigs, still implies multiple transactions for funding
-    function openAgreement(bytes _state, uint8 _v, bytes32 _r, bytes32 _s) public payable {
+
+    function openAgreement(bytes _state, address _ext, uint8 _v, bytes32 _r, bytes32 _s) public payable {
+        // only allow pre-deployed extension contracts
+        require(_assertExtension(_ext));     
+         // require the channel is not open yet
+        require(isOpen == false, 'openAgreement already called, isOpen true');
+        require(isPending == false, 'openAgreement already called, isPending true');
+
+        isPending = true;
         // check the account opening a channel signed the initial state
-        address s = _getSig(_state, _v, _r, _s);
-        // consider if this is required, reduces ability for 3rd party to facilitate txs 
-        //require(s == msg.sender || s == tx.origin);
-        _decodeState(_state);
-        require(partyA == s);
-        require(balanceA == msg.value);
-        state = _state;
+        address _initiator = _getSig(_state, _v, _r, _s);
 
-        bonded += msg.value;
+        ExtensionInterface deployedExtension = ExtensionInterface(_ext);
+
+        uint _length = _state.length;
+
+        // the open inerface can generalize an entry point for differenct kinds of checks 
+        // on opening state
+        require(address(deployedExtension).delegatecall(bytes4(keccak256("open(bytes, address)")), bytes32(32), bytes32(_length), _state, _initiator));
+
+        partyA = _initiator;
     }
 
-    function joinAgreement(uint8 _v, bytes32 _r, bytes32 _s) public payable {
+
+    function joinAgreement(bytes _state, address _ext, uint8 _v, bytes32 _r, bytes32 _s) public payable {
+        // only allow pre-deployed extension contracts        
+        require(_assertExtension(_ext));
         // require the channel is not open yet
         require(isOpen == false);
 
-        // check that the state is signed by the sender and sender is in the state
-        address _joiningParty = _getSig(state, _v, _r, _s);
-
-        require(_joiningParty == partyB);
-        require(balanceB == msg.value);
-
-        bonded += msg.value;
-
+        // no longer allow joining functions to be called
         isOpen = true;
+
+        // check that the state is signed by the sender and sender is in the state
+        address _joiningParty = _getSig(_state, _v, _r, _s);
+
+        ExtensionInterface deployedExtension = ExtensionInterface(_ext);
+
+        uint _length = _state.length;
+        
+        require(address(deployedExtension).delegatecall(bytes4(keccak256("join(bytes, address)")), bytes32(32), bytes32(_length), _state, _joiningParty));
+
+        // Set storage for state
+        partyB = _joiningParty;
     }
 
-    // TODO this is currently limited to monetary state
-    function updateAgreement() payable {
-        require(msg.sender == partyA || msg.sender == partyB);
-        if(msg.sender == partyA) { balanceA+= msg.value; }
-        if(msg.sender == partyB) { balanceB+= msg.value; }
-        bonded += msg.value;
+
+    // additive updates of monetary state
+    function depositState(bytes _state, address _ext, uint8[2] sigV, bytes32[2] sigR, bytes32[2] sigS) public payable {
+        require(_assertExtension(_ext));
+        require(isOpen == true, 'Tried adding state to a close msig wallet');
+        address _partyA = _getSig(_state, sigV[0], sigR[0], sigS[0]);
+        address _partyB = _getSig(_state, sigV[1], sigR[1], sigS[1]);
+
+        // Require both signatures 
+        require(_hasAllSigs(_partyA, _partyB));
+
+        ExtensionInterface deployedExtension = ExtensionInterface(_ext);
+
+        uint _length = _state.length;
+
+        require(address(deployedExtension).delegatecall(bytes4(keccak256("update(bytes)")), bytes32(32), bytes32(_length), _state));
     }
 
-    // TODO allow executing subchannel state. this will allow an on-chain sub-channel close
-    function executeState() {
-        // this might require an executable flag on the state like the isClose sentinel.
-        // this flag would represent an agreement to execute the given state
-        // this state should reflect the current state of the metachannel, which in cases
-        // of fault will reflect the final outcome of subchannel settlement
+
+    function closeSubchannel(uint _channelID) public {
+        MetaChannel deployedMetaChannel = MetaChannel(registry.resolveAddress(metachannel));
+
+        require(address(deployedMetaChannel).delegatecall(bytes4(keccak256("closeWithTimeoutSubchannel(uint)")), _channelID));
     }
 
-    // needs to have settlement process to close the final balance
-    // or just check that the meta channel has closed on a settle process
-    // this allows the spc to checkpoint state
-    function closeAgreementWithTimeout(bytes _state) public {
-        InterpreterInterface deployedInterpreter = InterpreterInterface(registry.resolveAddress(interpreter));
 
-        require(deployedInterpreter.isClosed() == 1);
+    function updateHTLCSubchannel(uint _channelID, bytes _proof, uint256 _lockedNonce, uint256 _amount, bytes32 _hash, uint256 _timeout, bytes32 _secret) public {
+        MetaChannel deployedMetaChannel = MetaChannel(registry.resolveAddress(metachannel));
 
-        require(keccak256(_state) == deployedInterpreter.statehash());
-
-        _finalize(_state);
-        isOpen = false;
+        uint _l = _proof.length;
+        require(address(deployedMetaChannel).delegatecall(bytes4(keccak256("updateHTLCBalances(bytes, uint, uint256, uint256, bytes32, uint256, bytes32)")), bytes32(32), bytes32(_l), _proof, _channelID, _lockedNonce, _amount, _hash, _timeout, _secret));
     }
 
 
     function closeAgreement(bytes _state, uint8[2] sigV, bytes32[2] sigR, bytes32[2] sigS) public {
-
         address _partyA = _getSig(_state, sigV[0], sigR[0], sigS[0]);
         address _partyB = _getSig(_state, sigV[1], sigR[1], sigS[1]);
 
-        require(_isClose(_state));
-
+        require(_isClose(_state), 'State did not have a signed close sentinel');
         require(_hasAllSigs(_partyA, _partyB));
 
-        _finalize(_state);
+        _finalizeAll(_state);
         isOpen = false;
     }
 
 
-    // this should delegate call to an extension to read the state 
-    // that was agreed upon either 
-    //  1. Coop case: State has both parties sigs with an agreement to close
-    //  2. Non-coop case: State has one sig
-    // no force pushing of state here due to state transitions resulting in value transfer
-    // it is conceivable that you could force an advantageous final state and ddos your counterparty
-    // this currently works with ether only. It should take a list of extenstions that need to be called
-    function _finalize(bytes _state) internal {
-        _decodeState(_state);
-        require(balanceA + balanceB == bonded);
-        partyA.transfer(balanceA);
-        partyB.transfer(balanceB);
+    function closeAgreementByzantine() public {
+        MetaChannel deployedMetaChannel = MetaChannel(registry.resolveAddress(metachannel));
+
+        require(deployedMetaChannel.isClosed() == 1);
+
+
+        _finalizeAll(deployedMetaChannel.state());
+        isOpen = false;
     }
 
+    // Internal 
+
+    function _finalizeAll(bytes _s) internal {
+        uint _length = _s.length;
+        for(uint i = 0; i < extensions.length; i++) {
+            ExtensionInterface deployedExtension = ExtensionInterface(extensions[i]);
+            require(address(deployedExtension).delegatecall(bytes4(keccak256("finalize(bytes)")), bytes32(32), bytes32(_length), _s));
+        }
+    }
+
+
+    function _assertExtension(address _e) internal view returns (bool) {
+        bool _contained = false;
+        for(uint i=0; i<extensions.length; i++) {
+            if(extensions[i] == _e) { _contained == true; }
+        }
+        return _contained;
+    }
+
+
     function _hasAllSigs(address _a, address _b) internal view returns (bool) {
-        require(_a == partyA && _b == partyB);
+        require(_a == partyA && _b == partyB, 'Signatures do not match parties in state');
 
         return true;
     }
+
 
     function _isClose(bytes _data) internal pure returns(bool) {
         uint isClosed;
@@ -173,30 +203,6 @@ contract MultiSig {
         return true;
     }
 
-    // TODO: for extensions, we can move this to the extension so that state decoding and acting
-    // upon state happens in the extension.
-    // In the case of CKBA the extension will be the arena contract. The arena will read
-    // the final state and update the global ledger of cat stats upon exit
-    function _decodeState(bytes _state) internal {
-        uint256 total;
-        address _addressA;
-        address _addressB;
-        uint256 _balanceA;
-        uint256 _balanceB;
-
-        assembly {
-            _addressA := mload(add(_state, 96))
-            _addressB := mload(add(_state, 128))
-            _balanceA := mload(add(_state, 160))
-            _balanceB := mload(add(_state, 192))
-        }
-
-        total = _balanceA + _balanceB;
-        balanceA = _balanceA;
-        balanceB = _balanceB;
-        partyA = _addressA;
-        partyB = _addressB;
-    }
 
     function _getSig(bytes _d, uint8 _v, bytes32 _r, bytes32 _s) internal pure returns(address) {
         bytes memory prefix = "\x19Ethereum Signed Message:\n32";
