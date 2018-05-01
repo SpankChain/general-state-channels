@@ -7,4 +7,6 @@ contract LibInterpreterInterface {
     function update(address _b, uint256 _a) public returns (bool);
 
     function updateHTLCtoken(address _b, uint256 _a, address _token) public returns (bool);
+
+    function validateState(bytes _state) public returns (bool);
 }

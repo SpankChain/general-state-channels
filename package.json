@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/nginnever/general-state-channels/issues"
   },
-  "homepage": "https://github.com/nginnever/general-state-channels#readme"
+  "homepage": "https://github.com/nginnever/general-state-channels#readme",
+  "devDependencies": {
+    "typescript": "^2.8.3"
+  }
 }

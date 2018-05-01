@@ -7,6 +7,14 @@ import "./CTFRegistry.sol";
 /// @title SpankChain Meta-channel - An interpreter designed to handle multiple state-channels
 /// @author Nathan Ginnever - <ginneversource@gmail.com>
 
+// sub-channel state
+// isClose
+// isForce
+// sequence
+// CTFaddress
+// partyA
+// partyB
+
 contract MetaChannel {
     // sub-channel state
     struct SubChannel {
@@ -15,6 +23,7 @@ contract MetaChannel {
         uint subSequence;
         uint lockedNonce;
         address[2] participants;
+        address challenger;
         bytes32 CTFaddress;
         uint subSettlementPeriodLength;
         uint subSettlementPeriodEnd;
@@ -42,6 +51,71 @@ contract MetaChannel {
         partyA = _partyA;
         partyB = _partyB;
     }
+
+    // Allows for single signature of state, it can punish invalid transitions that where signed
+    // or it may reward a valid state advance if the counterparty does not respond.
+    // Slash the initiator if they do respond
+    //
+    // Must start settling the force push state with the double signed open state on the force push subchannel
+    function forcePushSubchannel(bytes _forceState, uint _channelID) public payable{
+        // require force pushes to have a bond
+        require(msg.value == 1 ether);
+        // Make sure one of the parties has signed this subchannel update
+        require(_hasOneSig(msg.sender));
+
+        require(_getSequence(_forceState) > subChannels[_channelID].subSequence);
+
+        // this subchannel must have an agreement to allow force pushing state
+        require(_allowForce(subChannels[_channelID].subState) == 1);
+
+        LibInterpreterInterface deployedInterpreter = LibInterpreterInterface(registry.resolveAddress(subChannels[_channelID].CTFaddress));
+
+        // sub-channel must be open
+        require(subChannels[_channelID].isSubClose == 0);
+        // sub-channel must already be in a settle state, this should
+        // only be called once it is confirmed that a subchannel with both 
+        // parties sigs with a forcepsuh flag has entered
+        require(subChannels[_channelID].isSubInSettlementState == 1);
+
+        uint _length = _forceState.length;
+        require(address(deployedInterpreter).delegatecall(bytes4(keccak256("validateState(bytes)")), bytes32(32), bytes32(_length), _forceState));
+        
+        subChannels[_channelID].challenger = msg.sender;
+        subChannels[_channelID].subSequence = _getSequence(_forceState);
+        subChannels[_channelID].subState = _forceState;
+        subChannels[_channelID].subSettlementPeriodEnd = now + subChannels[_channelID].subSettlementPeriodLength;
+    }
+
+    function challengeForcePush(bytes _forceState, uint _channelID) public {
+        // Make sure one of the parties has signed this subchannel update
+        require(_hasOneSig(msg.sender));
+
+        require(_getSequence(_forceState) > subChannels[_channelID].subSequence);
+
+        // this subchannel must have an agreement to allow force pushing state
+        require(_allowForce(subChannels[_channelID].subState) == 1);     
+        // sub-channel must be open
+        require(subChannels[_channelID].isSubClose == 0);
+        // sub-channel must already be in a settle state, this should
+        // only be called once it is confirmed that a subchannel with both 
+        // parties sigs with a forcepsuh flag has entered
+        require(subChannels[_channelID].isSubInSettlementState == 1);
+        require(subChannels[_channelID].subSettlementPeriodEnd <= now);
+        require(subChannels[_channelID].challenger != 0x0);
+
+        LibInterpreterInterface deployedInterpreter = LibInterpreterInterface(registry.resolveAddress(subChannels[_channelID].CTFaddress));
+        uint _length = _forceState.length;
+        require(address(deployedInterpreter).delegatecall(bytes4(keccak256("validateState(bytes)")), bytes32(32), bytes32(_length), _forceState));
+        
+        subChannels[_channelID].subState = _forceState;
+        subChannels[_channelID].subSequence = _getSequence(_forceState);
+        // reset the challenger
+        subChannels[_channelID].challenger = 0x0;
+        subChannels[_channelID].subSettlementPeriodEnd = now + subChannels[_channelID].subSettlementPeriodLength;
+        // Punish the challenger for force pushing
+        msg.sender.transfer(1 ether);
+    }
+
 
     // entry point for settlement of byzantine sub-channel
     function startSettleStateSubchannel(bytes _proof, bytes _state, bytes _subchannel, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
@@ -74,6 +148,7 @@ contract MetaChannel {
         subChannels[_channelID].isSubInSettlementState = 1;
         subChannels[_channelID].subSettlementPeriodEnd = now + subChannels[_channelID].subSettlementPeriodLength;
         subChannels[_channelID].subState = _subchannel;
+        subChannels[_channelID].subSequence = _getSequence(_subchannel);
         state = _state;
     }
 
@@ -96,12 +171,13 @@ contract MetaChannel {
         bytes32 _stateHash = keccak256(_subchannel);
         require(_isContained(_stateHash, _proof, stateRoot));
 
-        require(_isSequenceHigher(_subchannel, subChannels[_channelID].subSequence));
+        require(_getSequence(_subchannel) > subChannels[_channelID].subSequence);
 
         subChannels[_channelID].CTFaddress = _getCTFaddress(_subchannel);
         // extend the challenge time for the sub-channel
         subChannels[_channelID].subSettlementPeriodEnd = now + subChannels[_channelID].subSettlementPeriodLength;
         subChannels[_channelID].subState = _subchannel;
+        subChannels[_channelID].subSequence = _getSequence(_subchannel);
         state = _state;
     }
 
@@ -120,6 +196,9 @@ contract MetaChannel {
 
         subChannels[_channelID].isSubClose = 1;
         subChannels[_channelID].isSubInSettlementState == 0;
+
+        // return bond if challenge received no response
+        if(subChannels[_channelID].challenger != 0x0) { subChannels[_channelID].challenger.transfer(1 ether); }
     }
 
 
@@ -175,7 +254,7 @@ contract MetaChannel {
         require(isInSettlementState == 1);
         require(settlementPeriodEnd <= now);
 
-        _isSequenceHigher(_state, sequence);
+        require(_getSequence(_state) > sequence);
 
         settlementPeriodEnd = now + settlementPeriodLength;
         state = _state;
@@ -203,15 +282,10 @@ contract MetaChannel {
         }
     }
 
-    function _isSequenceHigher(bytes _data, uint _nonce) public pure returns (bool) {
-        uint isHigher1;
-
+    function _getSequence(bytes _data) public pure returns (uint _seq) {
         assembly {
-            isHigher1 := mload(add(_data, 64))
+            _seq := mload(add(_data, 64))
         }
-
-        require(isHigher1 > _nonce);
-        return true;
     }
 
 
@@ -232,23 +306,21 @@ contract MetaChannel {
         return cursor == _root;
     }
 
+    function _allowForce(bytes _state) internal pure returns (uint _isForce) {
+        assembly { _isForce := mload(add(_state, 64))}
+    }
+
     function _hasAllSigs(address _a, address _b) internal view returns (bool) {
         require(_a == partyA && _b == partyB);
+        return true;
+    }
 
+    function _hasOneSig(address _c) internal view returns (bool) {
+        require(_c == partyA || _c == partyB);
         return true;
     }
 
     function _getRoot(bytes _state) internal pure returns (bytes32 _root){
-        // SPC State
-        // [
-        //    32 isClose
-        //    64 sequence
-        //    96 address 1
-        //    128 address 2
-        //    160 balance 1
-        //    192 balance 2
-        //    224 sub-channel root hash
-
         assembly {
             _root := mload(add(_state, 224))
         }
@@ -277,6 +349,7 @@ contract MetaChannel {
         uint subSequence,
         uint lockedNonce,
         address[2] participants,
+        address challenger,
         bytes32 subCTFaddress,
         uint subSettlementPeriodLength,
         uint subSettlementPeriodEnd,
@@ -289,6 +362,7 @@ contract MetaChannel {
             g.subSequence,
             g.lockedNonce,
             g.participants,
+            g.challenger,
             g.CTFaddress,
             g.subSettlementPeriodLength,
             g.subSettlementPeriodEnd,
