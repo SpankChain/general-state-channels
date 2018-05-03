@@ -79,7 +79,7 @@ contract MetaChannel {
 
         uint _length = _forceState.length;
         require(address(deployedInterpreter).delegatecall(bytes4(keccak256("validateState(bytes)")), bytes32(32), bytes32(_length), _forceState));
-        
+
         subChannels[_channelID].challenger = msg.sender;
         subChannels[_channelID].subSequence = _getSequence(_forceState);
         subChannels[_channelID].subState = _forceState;
@@ -137,7 +137,7 @@ contract MetaChannel {
         require(subChannels[_channelID].isSubInSettlementState == 0);
 
         bytes32 _stateHash = keccak256(_subchannel);
-        // do proof of inclusing in of sub-channel state in root state
+        // do proof of inclusing of sub-channel state in root state
         require(_isContained(_stateHash, _proof, stateRoot));
 
         // consider running some logic on the state from the interpreter to validate 
