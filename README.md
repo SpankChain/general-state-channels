@@ -11,7 +11,7 @@ A PoC combining insights derived from [L4](https://l4.ventures/) / [Counterfactu
   - [Bi-directional Payment Channel](#bi-directional-payment-channel)
   - [Hash Locked Transaction Channel](#hash-locked-transaction-channel)
   - [Virtual Payment Channel](#virtual-payment-channel)
-  - [Crypto Kitties Battle Channel](#crypto-kitties-battle-channel)
+  - [Battle Channel](#battle-channel)
 - [Background Information](#background-information)
 - [General State MultiSig API](#general-state-multisig-api)
   - [openChannel](#openchannel)
@@ -44,7 +44,7 @@ TODO
 
 TODO
 
-### Crypto Kitties Battle Channel
+### Battle Channel
 
 TODO
 

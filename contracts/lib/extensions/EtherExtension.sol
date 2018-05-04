@@ -70,4 +70,8 @@ contract EtherExtension is ExtensionInterface {
         getPartyA(_state).transfer(getBalanceA(_state));
         getPartyA(_state).transfer(getBalanceB(_state));      
     }
+
+    function finalize(bytes _state) public returns (bool) {
+        
+    }
 }

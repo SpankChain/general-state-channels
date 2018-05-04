@@ -10,12 +10,13 @@ const Registry = artifacts.require("./CTFRegistry.sol")
 const MetaChannel = artifacts.require("./MetaChannel.sol")
 
 // Interpreters / Extension
-const PaymentChannel = artifacts.require("./LibBidirectionalEther.sol")
-const TwoPartyPayment = artifacts.require("./EtherExtension.sol")
+const CTFPaymentChannel = artifacts.require("./LibBidirectionalEther.sol")
+const EtherExtension = artifacts.require("./EtherExtension.sol")
 
 // State
 let reg
 let msig
+let ethExt
 
 let partyA
 let partyB
@@ -48,7 +49,6 @@ contract('Test Ether Payments', function(accounts) {
     partyB = accounts[2]
 
     reg = await Registry.new()
-
   })
 
   it("counterfactually instantiate meta-channel", async () => {
@@ -70,7 +70,13 @@ contract('Test Ether Payments', function(accounts) {
     msig = await MultiSig.new(metachannelCTFaddress, reg.address)
   })
 
-  it("generate initial state", async () => {
+  it("deploy ether Extension", async () => {
+    ethExt = await EtherExtension.new()
+    // We zero out the eth extension for now
+    ethExt = '0x0'
+  })
+
+  it("generate initial ether state", async () => {
     var inputs = []
     inputs.push(0) // is close
     inputs.push(0) // sequence
@@ -86,6 +92,13 @@ contract('Test Ether Payments', function(accounts) {
 
   it("partyA signs state and opens msig agreement", async () => {
     s0sigA = await web3.eth.sign(partyA, web3.sha3(s0, {encoding: 'hex'}))
+    var r = s0sigA.substr(0,66)
+    var s = "0x" + s0sigA.substr(66,64)
+    var v = parseInt(s0sigA.substr(130, 2)) + 27
+
+    var receipt = await msig.openAgreement(s0, ethExt, v, r, s, {from: accounts[1], value: web3.toWei(10, 'ether')})
+    var gasUsed = receipt.receipt.gasUsed
+    //console.log('Gas Used: ' + gasUsed)
   })
 
 })

@@ -51,7 +51,7 @@ contract MultiSig {
     bytes32 public metachannel; // Counterfactual address of metachannel
 
     // Require curated extensions to be used.
-    address[3] public extensions = [0x0, 0x0, 0x0];
+    address[3] public extensions = [address(0x0), address(0x0), address(0x0)];
 
     bool public isOpen = false; // true when both parties have joined
     bool public isPending = false; // true when waiting for counterparty to join agreement
@@ -66,7 +66,7 @@ contract MultiSig {
 
     function openAgreement(bytes _state, address _ext, uint8 _v, bytes32 _r, bytes32 _s) public payable {
         // only allow pre-deployed extension contracts
-        require(_assertExtension(_ext));     
+        require(_assertExtension(_ext), 'extension is not listed');     
          // require the channel is not open yet
         require(isOpen == false, 'openAgreement already called, isOpen true');
         require(isPending == false, 'openAgreement already called, isPending true');
@@ -179,7 +179,7 @@ contract MultiSig {
     function _assertExtension(address _e) internal view returns (bool) {
         bool _contained = false;
         for(uint i=0; i<extensions.length; i++) {
-            if(extensions[i] == _e) { _contained == true; }
+            if(extensions[i] == _e) { _contained = true; }
         }
         return _contained;
     }
