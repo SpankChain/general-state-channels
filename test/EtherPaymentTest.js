@@ -73,7 +73,8 @@ contract('Test Ether Payments', function(accounts) {
   it("deploy ether Extension", async () => {
     ethExt = await EtherExtension.new()
     // We zero out the eth extension for now
-    ethExt = '0x0'
+    //ethExt = '0x0'
+    ethExt = ethExt.address
   })
 
   it("generate initial ether state", async () => {
@@ -100,5 +101,16 @@ contract('Test Ether Payments', function(accounts) {
     var gasUsed = receipt.receipt.gasUsed
     //console.log('Gas Used: ' + gasUsed)
   })
+
+  // it("partyA signs state and opens msig agreement", async () => {
+  //   s0sigA = await web3.eth.sign(partyA, web3.sha3(s0, {encoding: 'hex'}))
+  //   var r = s0sigA.substr(0,66)
+  //   var s = "0x" + s0sigA.substr(66,64)
+  //   var v = parseInt(s0sigA.substr(130, 2)) + 27
+
+  //   var receipt = await msig.openAgreement(s0, ethExt, v, r, s, {from: accounts[1], value: web3.toWei(10, 'ether')})
+  //   var gasUsed = receipt.receipt.gasUsed
+  //   //console.log('Gas Used: ' + gasUsed)
+  // })
 
 })

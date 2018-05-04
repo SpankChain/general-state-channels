@@ -66,7 +66,7 @@ contract MultiSig {
 
     function openAgreement(bytes _state, address _ext, uint8 _v, bytes32 _r, bytes32 _s) public payable {
         // only allow pre-deployed extension contracts
-        require(_assertExtension(_ext), 'extension is not listed');     
+        //require(_assertExtension(_ext), 'extension is not listed');     
          // require the channel is not open yet
         require(isOpen == false, 'openAgreement already called, isOpen true');
         require(isPending == false, 'openAgreement already called, isPending true');
@@ -81,8 +81,9 @@ contract MultiSig {
 
         // the open inerface can generalize an entry point for differenct kinds of checks 
         // on opening state
-        require(address(deployedExtension).delegatecall(bytes4(keccak256("open(bytes, address)")), bytes32(32), bytes32(_length), _state, _initiator));
-
+        bool _retval = address(deployedExtension).call(bytes4(keccak256("open(bytes, address)")), bytes32(32), bytes32(_length), _state, _initiator);
+        //address(deployedExtension).delegatecall(bytes4(keccak256("open()")));
+        require(_retval != false);
         partyA = _initiator;
     }
 

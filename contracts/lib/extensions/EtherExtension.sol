@@ -43,10 +43,10 @@ contract EtherExtension is ExtensionInterface {
     }
 
     function open(bytes _state, address _initiator) public returns (bool) {
-        require(msg.value > 0, 'Tried opening an ether agreement with 0 msg value');
-        require(_initiator == getPartyA(_state), 'Party A does not mactch signature recovery');
+        //require(msg.value > 0, 'Tried opening an ether agreement with 0 msg value');
+        //require(_initiator == getPartyA(_state), 'Party A does not mactch signature recovery');
         // ensure the amount sent to open channel matches the signed state balance
-        require(getBalanceA(_state) == msg.value, 'msg value does not match partyA state balance');
+        //require(getBalanceA(_state) == msg.value, 'msg value does not match partyA state balance');
         return true;
     }
 
@@ -72,6 +72,6 @@ contract EtherExtension is ExtensionInterface {
     }
 
     function finalize(bytes _state) public returns (bool) {
-        
+
     }
 }
