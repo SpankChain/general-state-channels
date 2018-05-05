@@ -1,9 +1,8 @@
 pragma solidity ^0.4.23;
 
-import "../../MultiSig.sol";
-import "./ExtensionInterface.sol";
+//import "./ExtensionInterface.sol";
 
-contract EtherExtension is ExtensionInterface {
+library EtherExtension {
 
     function getPartyA(bytes _s) public pure returns(address _partyA) {
         assembly {
@@ -42,7 +41,8 @@ contract EtherExtension is ExtensionInterface {
         return _a + _b;
     }
 
-    function open(bytes _state, address _initiator) public returns (bool) {
+    function open(bytes _state) public returns (bool) {
+        //t = _state;
         //require(msg.value > 0, 'Tried opening an ether agreement with 0 msg value');
         //require(_initiator == getPartyA(_state), 'Party A does not mactch signature recovery');
         // ensure the amount sent to open channel matches the signed state balance
@@ -65,13 +65,14 @@ contract EtherExtension is ExtensionInterface {
         require(address(this).balance + msg.value == getTotal(_state));
     }
 
-    function finalizeByzantine(bytes _state) public returns (bool) {
-        require(getTotal(_state) == address(this).balance, 'tried finalizing ether state that does not match bnded value');
-        getPartyA(_state).transfer(getBalanceA(_state));
-        getPartyA(_state).transfer(getBalanceB(_state));      
+    function finalizeByzantine(bytes _state, address _metachannel) public returns (bool) {
+        require(getTotal(_state) <= address(this).balance, 'tried finalizing ether state that does not match bnded value');
+        address(_metachannel).transfer(getTotal(_state));     
     }
 
     function finalize(bytes _state) public returns (bool) {
-
+        require(getTotal(_state) == address(this).balance, 'tried finalizing ether state that does not match bnded value');
+        getPartyA(_state).transfer(getBalanceA(_state));
+        getPartyA(_state).transfer(getBalanceB(_state));  
     }
 }

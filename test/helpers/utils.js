@@ -54,11 +54,13 @@ module.exports = {
   },
 
   getBytes: function getBytes(input) {
+    if(66-input.length <= 0) { return web3.toHex(input) }
     return this.padBytes32(web3.toHex(input))
   },
 
   compileState: function compileState(inputs) {
-    var m = inputs[0]
+    var m = this.getBytes(inputs[0])
+
     for(var i=1; i<inputs.length;i++) {
       m += this.getBytes(inputs[i]).substr(2, this.getBytes(inputs[i]).length)
     }
@@ -78,7 +80,9 @@ module.exports = {
   }, 
 
   padBytes32: function padBytes32(data){
+    // TODO: check input is hex / move to TS
     let l = 66-data.length
+
     let x = data.substr(2, data.length)
 
     for(var i=0; i<l; i++) {

@@ -42,6 +42,7 @@ contract MetaChannel {
     uint public sequence = 0;
     // settlement state
     uint public isInSettlementState = 0; // meta channel is in settling 1: Not settling 0
+    uint public isInSubSettlementState = 0; // sub channel is in settling 1: Not settling 0
     CTFRegistry public registry; // Address of the CTF registry
     uint public settlementPeriodEnd; // The time when challenges are no longer accepted after
 
@@ -100,7 +101,7 @@ contract MetaChannel {
         // only be called once it is confirmed that a subchannel with both 
         // parties sigs with a forcepsuh flag has entered
         require(subChannels[_channelID].isSubInSettlementState == 1);
-        require(subChannels[_channelID].subSettlementPeriodEnd <= now);
+        require(subChannels[_channelID].subSettlementPeriodEnd > now);
         require(subChannels[_channelID].challenger != 0x0);
 
         LibInterpreterInterface deployedInterpreter = LibInterpreterInterface(registry.resolveAddress(subChannels[_channelID].CTFaddress));
@@ -166,7 +167,7 @@ contract MetaChannel {
         require(_hasAllSigs(_partyA, _partyB));
 
         require(subChannels[_channelID].isSubInSettlementState == 1);
-        require(subChannels[_channelID].subSettlementPeriodEnd <= now);
+        require(subChannels[_channelID].subSettlementPeriodEnd > now);
 
         bytes32 _stateHash = keccak256(_subchannel);
         require(_isContained(_stateHash, _proof, stateRoot));

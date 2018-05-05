@@ -16,7 +16,8 @@ const EtherExtension = artifacts.require("./EtherExtension.sol")
 // State
 let reg
 let msig
-let ethExt
+let ethExtInst
+let ethExtAddress
 
 let partyA
 let partyB
@@ -71,10 +72,10 @@ contract('Test Ether Payments', function(accounts) {
   })
 
   it("deploy ether Extension", async () => {
-    ethExt = await EtherExtension.new()
+    ethExtInst = await EtherExtension.new()
     // We zero out the eth extension for now
     //ethExt = '0x0'
-    ethExt = ethExt.address
+    ethExtAddress = ethExtInst.address
   })
 
   it("generate initial ether state", async () => {
@@ -97,9 +98,13 @@ contract('Test Ether Payments', function(accounts) {
     var s = "0x" + s0sigA.substr(66,64)
     var v = parseInt(s0sigA.substr(130, 2)) + 27
 
-    var receipt = await msig.openAgreement(s0, ethExt, v, r, s, {from: accounts[1], value: web3.toWei(10, 'ether')})
+    var receipt = await msig.openAgreement(s0, ethExtAddress, v, r, s, {from: accounts[1], value: web3.toWei(10, 'ether')})
     var gasUsed = receipt.receipt.gasUsed
     //console.log('Gas Used: ' + gasUsed)
+    var t = await msig.partyA()
+
+    console.log(t)
+    console.log(partyA)
   })
 
   // it("partyA signs state and opens msig agreement", async () => {
