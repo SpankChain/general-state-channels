@@ -2,7 +2,6 @@ pragma solidity ^0.4.23;
 
 import "./CTFRegistry.sol";
 import "./MetaChannel.sol";
-import "./lib/extensions/EtherExtension.sol";
 
 /// @title SpankChain General-State-Channel - A multisignature "wallet" for general state
 /// @author Nathan Ginnever - <ginneversource@gmail.com>
@@ -75,14 +74,11 @@ contract MultiSig {
         // check the account opening a channel signed the initial state
         address _initiator = _getSig(_state, _v, _r, _s);
 
-        //ExtensionInterface deployedExtension = ExtensionInterface(_ext);
-        EtherExtension deployedExtension = EtherExtension(_ext);
-
         uint _length = _state.length;
 
         // the open inerface can generalize an entry point for differenct kinds of checks 
         // on opening state
-        bool _retval = address(deployedExtension).delegatecall(bytes4(keccak256("open(bytes)")), bytes32(32), bytes32(_length), _state);
+        bool _retval = address(_ext).delegatecall(bytes4(keccak256("open(bytes)")), bytes32(32), bytes32(_length), _state);
         //address(deployedExtension).delegatecall(bytes4(keccak256("open()")));
         require(_retval != false);
         partyA = _initiator;
@@ -91,7 +87,7 @@ contract MultiSig {
 
     function joinAgreement(bytes _state, address _ext, uint8 _v, bytes32 _r, bytes32 _s) public payable {
         // only allow pre-deployed extension contracts        
-        require(_assertExtension(_ext));
+        //require(_assertExtension(_ext));
         // require the channel is not open yet
         require(isOpen == false);
 
@@ -101,12 +97,11 @@ contract MultiSig {
         // check that the state is signed by the sender and sender is in the state
         address _joiningParty = _getSig(_state, _v, _r, _s);
 
-        EtherExtension deployedExtension = EtherExtension(_ext);
 
         uint _length = _state.length;
         
-        require(address(deployedExtension).delegatecall(bytes4(keccak256("join(bytes, address)")), bytes32(32), bytes32(_length), _state, _joiningParty));
-
+        bool _retval = address(_ext).delegatecall(bytes4(keccak256("join(bytes)")), bytes32(32), bytes32(_length), _state);
+        require(_retval != false);
         // Set storage for state
         partyB = _joiningParty;
     }
@@ -122,27 +117,10 @@ contract MultiSig {
         // Require both signatures 
         require(_hasAllSigs(_partyA, _partyB));
 
-        EtherExtension deployedExtension = EtherExtension(_ext);
-
         uint _length = _state.length;
 
-        require(address(deployedExtension).delegatecall(bytes4(keccak256("update(bytes)")), bytes32(32), bytes32(_length), _state));
+        require(address(_ext).delegatecall(bytes4(keccak256("update(bytes)")), bytes32(32), bytes32(_length), _state));
     }
-
-
-    // function closeSubchannel(uint _channelID) public {
-    //     MetaChannel deployedMetaChannel = MetaChannel(registry.resolveAddress(metachannel));
-
-    //     require(address(deployedMetaChannel).delegatecall(bytes4(keccak256("closeWithTimeoutSubchannel(uint)")), _channelID));
-    // }
-
-
-    // function updateHTLCSubchannel(uint _channelID, bytes _proof, uint256 _lockedNonce, uint256 _amount, bytes32 _hash, uint256 _timeout, bytes32 _secret) public {
-    //     MetaChannel deployedMetaChannel = MetaChannel(registry.resolveAddress(metachannel));
-
-    //     uint _l = _proof.length;
-    //     require(address(deployedMetaChannel).delegatecall(bytes4(keccak256("updateHTLCBalances(bytes, uint, uint256, uint256, bytes32, uint256, bytes32)")), bytes32(32), bytes32(_l), _proof, _channelID, _lockedNonce, _amount, _hash, _timeout, _secret));
-    // }
 
 
     function closeAgreement(bytes _state, uint8[2] sigV, bytes32[2] sigR, bytes32[2] sigS) public {
@@ -157,7 +135,8 @@ contract MultiSig {
     }
 
 
-    function closeSubchannel(uint _subchannelID, uint _extensionUsed) public {
+    function closeSubchannel(uint _subchannelID, address _ext) public {
+        require(_assertExtension(_ext));
         MetaChannel deployedMetaChannel = MetaChannel(registry.resolveAddress(metachannel));
 
         uint isSettle;
@@ -165,7 +144,7 @@ contract MultiSig {
         (,isSettle,,,,,,,,_state) = deployedMetaChannel.getSubChannel(_subchannelID);
         require(isSettle == 1);
 
-        _finalizeSubchannel(_state, _extensionUsed);
+        _finalizeSubchannel(_state, _ext);
     }
 
     // Internal 
@@ -173,16 +152,14 @@ contract MultiSig {
     function _finalizeAll(bytes _s) internal {
         uint _length = _s.length;
         for(uint i = 0; i < extensions.length; i++) {
-            EtherExtension deployedExtension = EtherExtension(extensions[i]);
-            require(address(deployedExtension).delegatecall(bytes4(keccak256("finalize(bytes)")), bytes32(32), bytes32(_length), _s));
+            require(address(extensions[i]).delegatecall(bytes4(keccak256("finalize(bytes)")), bytes32(32), bytes32(_length), _s));
         }
     }
 
     // send all funds to metachannel if a channel is in dispute
-    function _finalizeSubchannel(bytes _s, uint _extNum) internal {
+    function _finalizeSubchannel(bytes _s, address _ext) internal {
         uint _length = _s.length;
-        EtherExtension deployedExtension = EtherExtension(extensions[_extNum]);
-        require(address(deployedExtension).delegatecall(bytes4(keccak256("finalizeByzantine(bytes)")), bytes32(32), bytes32(_length), _s));
+        require(address(_ext).delegatecall(bytes4(keccak256("finalizeByzantine(bytes)")), bytes32(32), bytes32(_length), _s));
     }
 
 
