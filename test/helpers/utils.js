@@ -1,3 +1,6 @@
+const Buffer = require('buffer').Buffer
+const util = require('ethereumjs-util')
+
 module.exports = {
   latestTime: function latestTime() {
     return web3.eth.getBlock('latest').timestamp
@@ -98,5 +101,17 @@ module.exports = {
       data+=0
     }
     return data
+  },
+
+  hexToBuffer: function hexToBuffer(hexString) {
+    return new Buffer(hexString, 'hex')
+  },
+
+  bufferToHex: function bufferToHex(buffer) {
+    return '0x'+ buffer.toString('hex')
+  },
+
+  isHash: function isHash(buffer) {
+    return buffer.length === 32 && Buffer.isBuffer(buffer)
   }
 }

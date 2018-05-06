@@ -50,7 +50,7 @@ contract MultiSig {
     bytes32 public metachannel; // Counterfactual address of metachannel
 
     // Require curated extensions to be used.
-    address[3] public extensions = [address(0x0), address(0x0), address(0x0)];
+    address[] public extensions;
 
     bool public isOpen = false; // true when both parties have joined
     bool public isPending = false; // true when waiting for counterparty to join agreement
@@ -80,6 +80,8 @@ contract MultiSig {
         // on opening state
         require(address(_ext).delegatecall(bytes4(keccak256("open(bytes)")), bytes32(32), bytes32(_length), _state));
         partyA = _initiator;
+        // TODO: fix this
+        extensions.push(_ext);
     }
 
 
