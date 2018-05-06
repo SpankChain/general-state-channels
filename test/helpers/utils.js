@@ -57,7 +57,8 @@ module.exports = {
   },
 
   getBytes: function getBytes(input) {
-    if(66-input.length <= 0) { return web3.toHex(input) }
+    if(Buffer.isBuffer(input)) input = '0x' + input.toString('hex')
+    if(66-input.length <= 0) return web3.toHex(input)
     return this.padBytes32(web3.toHex(input))
   },
 
@@ -74,9 +75,10 @@ module.exports = {
     return web3.sha3(_r, {encoding: 'hex'})
   },
 
-   getCTFstate: async function getCTFaddress(_contract, _signers, _args) {
-    _args.unshift(_contract.constructor.bytecode)
+  getCTFstate: async function getCTFstate(_contract, _signers, _args) {
+    _args.unshift(_contract)
     var _m = this.marshallState(_args)
+    _signers.push(_contract.length)
     _signers.push(_m)
     var _r = this.marshallState(_signers)
     return _r
@@ -104,7 +106,7 @@ module.exports = {
   },
 
   hexToBuffer: function hexToBuffer(hexString) {
-    return new Buffer(hexString, 'hex')
+    return new Buffer(hexString.substr(2, hexString.length), 'hex')
   },
 
   bufferToHex: function bufferToHex(buffer) {

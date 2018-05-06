@@ -1,8 +1,11 @@
 pragma solidity ^0.4.23;
 
-//import "./ExtensionInterface.sol";
-
 library EtherExtension {
+    function getMetaAddress(bytes _s) public pure returns (address _addy) {
+        assembly {
+            _addy := mload(add(_s, 160))
+        }
+    }
 
     function getPartyA(bytes _s) public pure returns(address _partyA) {
         assembly {
@@ -33,7 +36,7 @@ library EtherExtension {
         uint256 _b;
 
         assembly {
-            _b := mload(add(_s, 224))
+            _a := mload(add(_s, 224))
             _b := mload(add(_s, 256))
         }
 
@@ -64,14 +67,9 @@ library EtherExtension {
         //require(address(this).balance + msg.value == getTotal(_state));
     }
 
-    function finalizeByzantine(bytes _state, address _metachannel) public {
-        require(getTotal(_state) <= address(this).balance, 'tried finalizing ether state that does not match bnded value');
-        address(_metachannel).transfer(getTotal(_state));     
-    }
-
     function finalize(bytes _state) public {
         //require(getTotal(_state) == address(this).balance, 'tried finalizing ether state that does not match bnded value');
         getPartyA(_state).transfer(getBalanceA(_state));
-        getPartyA(_state).transfer(getBalanceB(_state));  
+        getPartyB(_state).transfer(getBalanceB(_state));  
     }
 }

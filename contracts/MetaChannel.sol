@@ -11,10 +11,12 @@ import "./CTFRegistry.sol";
 // isForce
 // sequence
 // InterpreterLibAddress
+// channel ID
 // partyA
 // partyB
 
 contract MetaChannel {
+
     // sub-channel state
     struct SubChannel {
         uint isSubClose;
@@ -81,7 +83,7 @@ contract MetaChannel {
         subChannels[_channelID].challenger = msg.sender;
         subChannels[_channelID].subSequence = _getSequence(_forceState);
         subChannels[_channelID].subState = _forceState;
-        subChannels[_channelID].subSettlementPeriodEnd = now + subChannels[_channelID].subSettlementPeriodLength;
+        subChannels[_channelID].subSettlementPeriodEnd = now + _getChallengePeriod(subChannels[_channelID].subState);
     }
 
     function challengeForcePush(bytes _forceState, uint _channelID) public {
@@ -108,7 +110,7 @@ contract MetaChannel {
         subChannels[_channelID].subSequence = _getSequence(_forceState);
         // reset the challenger
         subChannels[_channelID].challenger = 0x0;
-        subChannels[_channelID].subSettlementPeriodEnd = now + subChannels[_channelID].subSettlementPeriodLength;
+        subChannels[_channelID].subSettlementPeriodEnd = now + _getChallengePeriod(subChannels[_channelID].subState);
         // Punish the challenger for force pushing
         msg.sender.transfer(1 ether);
     }
@@ -140,10 +142,10 @@ contract MetaChannel {
         // consider running some logic on the state from the interpreter to validate 
         // the new state obeys transition rules
 
-        subChannels[_channelID].CTFaddress = _getCTFaddress(_subchannel);
+        subChannels[_channelID].CTFaddress = _getInterpreterAddress(_subchannel);
 
         subChannels[_channelID].isSubInSettlementState = 1;
-        subChannels[_channelID].subSettlementPeriodEnd = now + subChannels[_channelID].subSettlementPeriodLength;
+        subChannels[_channelID].subSettlementPeriodEnd = now + _getChallengePeriod(_subchannel);
         subChannels[_channelID].subState = _subchannel;
         subChannels[_channelID].subSequence = _getSequence(_subchannel);
         state = _state;
@@ -170,9 +172,9 @@ contract MetaChannel {
 
         require(_getSequence(_subchannel) > subChannels[_channelID].subSequence);
 
-        subChannels[_channelID].CTFaddress = _getCTFaddress(_subchannel);
+        subChannels[_channelID].CTFaddress = _getInterpreterAddress(_subchannel);
         // extend the challenge time for the sub-channel
-        subChannels[_channelID].subSettlementPeriodEnd = now + subChannels[_channelID].subSettlementPeriodLength;
+        subChannels[_channelID].subSettlementPeriodEnd = now + _getChallengePeriod(_subchannel);
         subChannels[_channelID].subState = _subchannel;
         subChannels[_channelID].subSequence = _getSequence(_subchannel);
         state = _state;
@@ -186,7 +188,8 @@ contract MetaChannel {
         require(subChannels[_channelID].isSubInSettlementState == 1);
 
         uint _length = subChannels[_channelID].subState.length;
-        require(address(subChannels[_channelID].CTFaddress).delegatecall(bytes4(keccak256("finalizeState(bytes)")), bytes32(32), bytes32(_length), subChannels[_channelID].subState));
+        bytes memory _s = subChannels[_channelID].subState;
+        require(address(subChannels[_channelID].CTFaddress).delegatecall(bytes4(keccak256("finalizeState(bytes)")), bytes32(32), bytes32(_length), _s));
 
         subChannels[_channelID].isSubClose = 1;
         subChannels[_channelID].isSubInSettlementState == 0;
@@ -223,61 +226,67 @@ contract MetaChannel {
 
     // /// --- Close Meta Channel Functions
 
-    function startSettle(bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
-        address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
-        address _partyB = _getSig(_state, _v[1], _r[1], _s[1]);
+    // function startSettle(bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
+    //     address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
+    //     address _partyB = _getSig(_state, _v[1], _r[1], _s[1]);
 
-        require(_hasAllSigs(_partyA, _partyB));
+    //     require(_hasAllSigs(_partyA, _partyB));
 
-        require(isClosed == 0);
-        require(isInSettlementState == 0);
+    //     require(isClosed == 0);
+    //     require(isInSettlementState == 0);
 
-        state = _state;
+    //     state = _state;
 
-        isInSettlementState = 1;
-        settlementPeriodEnd = now + settlementPeriodLength;
-    }
+    //     isInSettlementState = 1;
+    //     settlementPeriodEnd = now + settlementPeriodLength;
+    // }
 
-    function challengeSettle(bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
-        address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
-        address _partyB = _getSig(_state, _v[1], _r[1], _s[1]);
+    // function challengeSettle(bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
+    //     address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
+    //     address _partyB = _getSig(_state, _v[1], _r[1], _s[1]);
 
-        require(_hasAllSigs(_partyA, _partyB));
+    //     require(_hasAllSigs(_partyA, _partyB));
 
-        require(isInSettlementState == 1);
-        require(settlementPeriodEnd <= now);
+    //     require(isInSettlementState == 1);
+    //     require(settlementPeriodEnd <= now);
 
-        require(_getSequence(_state) > sequence);
+    //     require(_getSequence(_state) > sequence);
 
-        settlementPeriodEnd = now + settlementPeriodLength;
-        state = _state;
-        sequence++;
-    }
+    //     settlementPeriodEnd = now + settlementPeriodLength;
+    //     state = _state;
+    //     sequence++;
+    // }
 
-    function closeWithTimeout() public {
-        require(settlementPeriodEnd <= now);
-        require(isClosed == 0);
-        require(isInSettlementState == 1);
+    // function closeWithTimeout() public {
+    //     require(settlementPeriodEnd <= now);
+    //     require(isClosed == 0);
+    //     require(isInSettlementState == 1);
 
-        isClosed = 1;
-    }
+    //     isClosed = 1;
+    // }
 
     // Internal Functions
-    function _getCTFaddress(bytes _s) public pure  returns (address _ctf) {
+    function _getInterpreterAddress(bytes _s) public pure  returns (address _ctf) {
         assembly {
-            _ctf := mload(add(_s, 64))
+            _ctf := mload(add(_s, 160))
         }
     }
 
     function _getChannelID(bytes _s) public pure returns (uint _id) {
         assembly {
-            _id := mload(add(_s, 96))
+            _id := mload(add(_s, 192))
         }
     }
 
     function _getSequence(bytes _data) public pure returns (uint _seq) {
         assembly {
             _seq := mload(add(_data, 64))
+        }
+    }
+
+    function _getChallengePeriod(bytes _data) public pure returns (uint _length) {
+        assembly {
+            _length := mload(add(_data, 128))
         }
     }
 
@@ -300,7 +309,7 @@ contract MetaChannel {
     }
 
     function _allowForce(bytes _state) internal pure returns (uint _isForce) {
-        assembly { _isForce := mload(add(_state, 64))}
+        assembly { _isForce := mload(add(_state, 96))}
     }
 
     function _hasAllSigs(address _a, address _b) internal view returns (bool) {
@@ -315,7 +324,7 @@ contract MetaChannel {
 
     function _getRoot(bytes _state) internal pure returns (bytes32 _root){
         assembly {
-            _root := mload(add(_state, 224))
+            _root := mload(add(_state, 192))
         }
     }
 
@@ -362,4 +371,6 @@ contract MetaChannel {
             g.subState
         );
     }
+
+    function() payable {}
 }

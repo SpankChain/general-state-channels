@@ -134,14 +134,15 @@ contract MultiSig {
     }
 
 
-    function closeSubchannel(uint _subchannelID, address _ext) public {
-        require(_assertExtension(_ext));
+    function closeSubchannel(uint _subchannelID) public {
         MetaChannel deployedMetaChannel = MetaChannel(registry.resolveAddress(metachannel));
 
         uint isSettle;
         bytes memory _state;
         (,isSettle,,,,,,,,_state) = deployedMetaChannel.getSubChannel(_subchannelID);
         require(isSettle == 1);
+
+        address _ext = _getInterpreter(_state);
 
         _finalizeSubchannel(_state, _ext);
     }
@@ -168,6 +169,12 @@ contract MultiSig {
             if(extensions[i] == _e) { _contained = true; }
         }
         return _contained;
+    }
+
+    function _getInterpreter(bytes _s) public pure returns(address _int) {
+        assembly {
+            _int := mload(add(_s, 160))
+        }
     }
 
 

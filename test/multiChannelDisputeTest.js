@@ -64,7 +64,7 @@ let ss0marshall
 let ss1 
 let ss1marshall
 
-contract('Test Ether Payments', function(accounts) {
+contract('Test Multiple Disputed Channels', function(accounts) {
 
   before(async () => {
     partyA = accounts[1]
@@ -138,9 +138,9 @@ contract('Test Ether Payments', function(accounts) {
   })
 
   it("generate ether payment channel state", async () => {
-    ethChannelID = web3.sha3(Math.random())
     // Since channels are now library logic, we can resuse deploys between channels
     // We probably don't need to counterfactually instantiate a lib for every channel
+    ethChannelID = web3.sha3(Math.random())
     var subchannelInputs = []
     subchannelInputs.push(0) // is close
     subchannelInputs.push(0) // is force push channel
@@ -190,8 +190,8 @@ contract('Test Ether Payments', function(accounts) {
   it("generate ether channel payment", async () => {
     var subchannelInputs = []
     subchannelInputs.push(0) // is close
-    subchannelInputs.push(0) // is force push channel
     subchannelInputs.push(1) // subchannel sequence
+    subchannelInputs.push(0) // is force push channel
     subchannelInputs.push(0) // timeout length ms
     subchannelInputs.push(paymentchanneladdress) // ether payment interpreter library address
     subchannelInputs.push(ethChannelID) // ID of subchannel
@@ -205,7 +205,7 @@ contract('Test Ether Payments', function(accounts) {
     ss1 = subchannelInputs
     ss1marshall = Utils.marshallState(subchannelInputs)
     
-    var hash = web3.sha3(s1marshall, {encoding: 'hex'})
+    var hash = web3.sha3(ss1marshall, {encoding: 'hex'})
     var buf = Utils.hexToBuffer(hash)
     // TODO: deal with all subchannels stored as elems array, and how to replace
     // each channel independently when they are updated
@@ -236,58 +236,100 @@ contract('Test Ether Payments', function(accounts) {
     s2sigB = await web3.eth.sign(partyB, web3.sha3(s2marshall, {encoding: 'hex'}))
   })
 
-  it("generate close channel state", async () => {
-    var inputs = []
-    inputs.push(1) // is close
-    inputs.push(3) // sequence
-    inputs.push(partyA) // partyA address
-    inputs.push(partyB) // partyB address
-    inputs.push(metachannelCTFaddress) // counterfactual metachannel address
-    inputs.push('0x0') // sub-channel root hash
-    inputs.push(web3.toWei(11, 'ether')) // balance in ether partyA
-    inputs.push(web3.toWei(19, 'ether')) // balance in ether partyB
 
-    s3 = inputs
-    s3marshall = Utils.marshallState(inputs)    
-  })
 
-  it("both parties sign state: s3", async () => {
-    s3sigA = await web3.eth.sign(partyA, web3.sha3(s3marshall, {encoding: 'hex'}))
-    s3sigB = await web3.eth.sign(partyB, web3.sha3(s3marshall, {encoding: 'hex'}))
-  })
+  // it("party B instantiates metachannel (A byzantine)", async () => {
+  //   var r = metachannelCTFsigA.substr(0,66)
+  //   var s = "0x" + metachannelCTFsigA.substr(66,64)
+  //   var v = parseInt(metachannelCTFsigA.substr(130, 2)) + 27
 
-  it("closes the channel", async () => {
-    var r = s3sigA.substr(0,66)
-    var s = "0x" + s3sigA.substr(66,64)
-    var v = parseInt(s3sigA.substr(130, 2)) + 27
+  //   var r2 = metachannelCTFsigB.substr(0,66)
+  //   var s2 = "0x" + metachannelCTFsigB.substr(66,64)
+  //   var v2 = parseInt(metachannelCTFsigB.substr(130, 2)) + 27
 
-    var r2 = s3sigB.substr(0,66)
-    var s2 = "0x" + s3sigB.substr(66,64)
-    var v2 = parseInt(s3sigB.substr(130, 2)) + 27
+  //   var sigV = []
+  //   var sigR = []
+  //   var sigS = []
 
-    var sigV = []
-    var sigR = []
-    var sigS = []
+  //   sigV.push(v)
+  //   sigV.push(v2)
+  //   sigR.push(r)
+  //   sigR.push(r2)
+  //   sigS.push(s)
+  //   sigS.push(s2)
 
-    sigV.push(v)
-    sigV.push(v2)
-    sigR.push(r)
-    sigR.push(r2)
-    sigS.push(s)
-    sigS.push(s2)
+  //   var receipt = await reg.deployCTF(metaCTF, sigV, sigR, sigS)
+  //   var gasUsed = receipt.receipt.gasUsed
+  //   //console.log('Gas Used: ' + gasUsed)
 
-    var balA = await web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether')
-    var balB = await web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether')
-    //console.log('Balance A before close: ' + balA)
-    //console.log('Balance B before close: ' + balB)
+  //   let deployAddress = await reg.resolveAddress(metachannelCTFaddress)
+  //   metachannel = MetaChannel.at(deployAddress)
+  // })
 
-    var receipt = await msig.closeAgreement(s3marshall, sigV, sigR, sigS)
-    var gasUsed = receipt.receipt.gasUsed
-    //console.log('Gas Used: ' + gasUsed)
+  // it("party B starts settle state on ether channel", async () => {
+  //   var r = s2sigA.substr(0,66)
+  //   var s = "0x" + s2sigA.substr(66,64)
+  //   var v = parseInt(s2sigA.substr(130, 2)) + 27
 
-    balA = await web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether')
-    balB = await web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether')
-    //console.log('Balance A after close: ' + balA)
-    //console.log('Balance B after close: ' + balB)
-  })
+  //   var r2 = s2sigB.substr(0,66)
+  //   var s2 = "0x" + s2sigB.substr(66,64)
+  //   var v2 = parseInt(s2sigB.substr(130, 2)) + 27
+
+  //   var sigV = []
+  //   var sigR = []
+  //   var sigS = []
+
+  //   sigV.push(v)
+  //   sigV.push(v2)
+  //   sigR.push(r)
+  //   sigR.push(r2)
+  //   sigS.push(s)
+  //   sigS.push(s2)
+
+  //   // get merkle proof
+  //   var hash = web3.sha3(ss1marshall, {encoding: 'hex'})
+  //   var buf = Utils.hexToBuffer(hash)
+  //   var elems = []
+  //   elems.push(buf)
+  //   var merkle = new MerkleTree(elems)
+  //   var proof = [merkle.getRoot()]
+  //   proof = Utils.marshallState(proof)
+
+  //   var receipt = await metachannel.startSettleStateSubchannel(proof, s2marshall, ss1marshall, sigV, sigR, sigS)
+  //   var gasUsed = receipt.receipt.gasUsed
+  //   //console.log('Gas Used: ' + gasUsed)
+
+  //   var subchan = await metachannel.getSubChannel(ethChannelID)
+  //   //console.log(subchan)
+  // })
+
+  // //TODO: Create 3rd state and challenge
+
+  // it("subchan now settling, transfer funds from msig to metachannel", async () => {
+  //   var receipt = await msig.closeSubchannel(ethChannelID)
+  //   var gasUsed = receipt.receipt.gasUsed
+  //   //console.log('Gas Used: ' + gasUsed)
+  //   //console.log(web3.eth.getBalance(metachannel.address))
+  // })
+
+  // it("close subchannel", async () => {
+  //   var balA = await web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether')
+  //   var balB = await web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether')
+  //   //console.log('Balance A before close: ' + balA)
+  //   //console.log('Balance B before close: ' + balB)
+  //   var metaBal = await web3.fromWei(web3.eth.getBalance(metachannel.address), 'ether')
+  //   //console.log(metaBal)
+
+  //   var receipt = await metachannel.closeWithTimeoutSubchannel(ethChannelID)
+  //   var gasUsed = receipt.receipt.gasUsed
+  //   //console.log('Gas Used: ' + gasUsed)
+
+  //   balA = await web3.fromWei(web3.eth.getBalance(accounts[1]), 'ether')
+  //   balB = await web3.fromWei(web3.eth.getBalance(accounts[2]), 'ether')
+  //   // console.log('Balance A after close: ' + balA)
+  //   // console.log('Balance B after close: ' + balB)
+  //   metaBal = await web3.fromWei(web3.eth.getBalance(metachannel.address), 'ether')
+  //   // console.log(metaBal)
+  // })
+
 })
