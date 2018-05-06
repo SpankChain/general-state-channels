@@ -58,7 +58,7 @@ module.exports = {
     return this.padBytes32(web3.toHex(input))
   },
 
-  compileState: function compileState(inputs) {
+  marshallState: function marshallState(inputs) {
     var m = this.getBytes(inputs[0])
 
     for(var i=1; i<inputs.length;i++) {
@@ -73,9 +73,9 @@ module.exports = {
 
    getCTFstate: async function getCTFaddress(_contract, _signers, _args) {
     _args.unshift(_contract.constructor.bytecode)
-    var _m = this.compileState(_args)
+    var _m = this.marshallState(_args)
     _signers.push(_m)
-    var _r = this.compileState(_signers)
+    var _r = this.marshallState(_signers)
     return _r
   }, 
 

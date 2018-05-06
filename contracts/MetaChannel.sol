@@ -1,7 +1,6 @@
 
 pragma solidity ^0.4.23;
 
-import "./lib/interpreters/LibInterpreterInterface.sol";
 import "./CTFRegistry.sol";
 
 /// @title SpankChain Meta-channel - An interpreter designed to handle multiple state-channels
@@ -11,7 +10,7 @@ import "./CTFRegistry.sol";
 // isClose
 // isForce
 // sequence
-// CTFaddress
+// InterpreterLibAddress
 // partyA
 // partyB
 
@@ -24,7 +23,7 @@ contract MetaChannel {
         uint lockedNonce;
         address[2] participants;
         address challenger;
-        bytes32 CTFaddress;
+        address CTFaddress;
         uint subSettlementPeriodLength;
         uint subSettlementPeriodEnd;
         bytes subState;
@@ -69,8 +68,6 @@ contract MetaChannel {
         // this subchannel must have an agreement to allow force pushing state
         require(_allowForce(subChannels[_channelID].subState) == 1);
 
-        LibInterpreterInterface deployedInterpreter = LibInterpreterInterface(registry.resolveAddress(subChannels[_channelID].CTFaddress));
-
         // sub-channel must be open
         require(subChannels[_channelID].isSubClose == 0);
         // sub-channel must already be in a settle state, this should
@@ -79,7 +76,7 @@ contract MetaChannel {
         require(subChannels[_channelID].isSubInSettlementState == 1);
 
         uint _length = _forceState.length;
-        require(address(deployedInterpreter).delegatecall(bytes4(keccak256("validateState(bytes)")), bytes32(32), bytes32(_length), _forceState));
+        require(address(subChannels[_channelID].CTFaddress).delegatecall(bytes4(keccak256("validateState(bytes)")), bytes32(32), bytes32(_length), _forceState));
 
         subChannels[_channelID].challenger = msg.sender;
         subChannels[_channelID].subSequence = _getSequence(_forceState);
@@ -104,9 +101,8 @@ contract MetaChannel {
         require(subChannels[_channelID].subSettlementPeriodEnd > now);
         require(subChannels[_channelID].challenger != 0x0);
 
-        LibInterpreterInterface deployedInterpreter = LibInterpreterInterface(registry.resolveAddress(subChannels[_channelID].CTFaddress));
         uint _length = _forceState.length;
-        require(address(deployedInterpreter).delegatecall(bytes4(keccak256("validateState(bytes)")), bytes32(32), bytes32(_length), _forceState));
+        require(address(subChannels[_channelID].CTFaddress).delegatecall(bytes4(keccak256("validateState(bytes)")), bytes32(32), bytes32(_length), _forceState));
         
         subChannels[_channelID].subState = _forceState;
         subChannels[_channelID].subSequence = _getSequence(_forceState);
@@ -185,15 +181,12 @@ contract MetaChannel {
     // in the case of HTLC sub-channels, this must be called after the subchannel interpreter
     // has had enough time to play out the locked txs and update is balances
     function closeWithTimeoutSubchannel(uint _channelID) public {
-        // Since interpreters are libraries, we don't need to coutnerfactually instantiate them
-        LibInterpreterInterface deployedInterpreter = LibInterpreterInterface(registry.resolveAddress(subChannels[_channelID].CTFaddress));
-
         require(subChannels[_channelID].subSettlementPeriodEnd <= now);
         require(subChannels[_channelID].isSubClose == 0);
         require(subChannels[_channelID].isSubInSettlementState == 1);
 
         uint _length = subChannels[_channelID].subState.length;
-        require(address(deployedInterpreter).delegatecall(bytes4(keccak256("finalizeState(bytes)")), bytes32(32), bytes32(_length), subChannels[_channelID].subState));
+        require(address(subChannels[_channelID].CTFaddress).delegatecall(bytes4(keccak256("finalizeState(bytes)")), bytes32(32), bytes32(_length), subChannels[_channelID].subState));
 
         subChannels[_channelID].isSubClose = 1;
         subChannels[_channelID].isSubInSettlementState == 0;
@@ -221,8 +214,7 @@ contract MetaChannel {
         // redeem case
         require(keccak256(_secret) == _hash);
 
-        LibInterpreterInterface deployedInterpreter = LibInterpreterInterface(registry.resolveAddress(subChannels[_channelID].CTFaddress));
-        require(address(deployedInterpreter).delegatecall(bytes4(keccak256("update(address, uint256)")), partyB, _amount));
+        require(address(subChannels[_channelID].CTFaddress).delegatecall(bytes4(keccak256("update(address, uint256)")), partyB, _amount));
 
         subChannels[_channelID].lockedNonce++;
 
@@ -271,7 +263,7 @@ contract MetaChannel {
     }
 
     // Internal Functions
-    function _getCTFaddress(bytes _s) public pure  returns (bytes32 _ctf) {
+    function _getCTFaddress(bytes _s) public pure  returns (address _ctf) {
         assembly {
             _ctf := mload(add(_s, 64))
         }
@@ -351,7 +343,7 @@ contract MetaChannel {
         uint lockedNonce,
         address[2] participants,
         address challenger,
-        bytes32 subCTFaddress,
+        address subCTFaddress,
         uint subSettlementPeriodLength,
         uint subSettlementPeriodEnd,
         bytes subState

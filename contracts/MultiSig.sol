@@ -78,9 +78,7 @@ contract MultiSig {
 
         // the open inerface can generalize an entry point for differenct kinds of checks 
         // on opening state
-        bool _retval = address(_ext).delegatecall(bytes4(keccak256("open(bytes)")), bytes32(32), bytes32(_length), _state);
-        //address(deployedExtension).delegatecall(bytes4(keccak256("open()")));
-        require(_retval != false);
+        require(address(_ext).delegatecall(bytes4(keccak256("open(bytes)")), bytes32(32), bytes32(_length), _state));
         partyA = _initiator;
     }
 
@@ -100,8 +98,7 @@ contract MultiSig {
 
         uint _length = _state.length;
         
-        bool _retval = address(_ext).delegatecall(bytes4(keccak256("join(bytes)")), bytes32(32), bytes32(_length), _state);
-        require(_retval != false);
+        require(address(_ext).delegatecall(bytes4(keccak256("join(bytes)")), bytes32(32), bytes32(_length), _state));
         // Set storage for state
         partyB = _joiningParty;
     }
