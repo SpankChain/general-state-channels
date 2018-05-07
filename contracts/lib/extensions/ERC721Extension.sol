@@ -1,8 +1,7 @@
 pragma solidity ^0.4.23;
 
-import "./ExtensionInterface.sol";
 
-contract ERC721Extension is ExtensionInterface {
+library ERC721Extension {
     // function open(bytes _state, address _initiator) public returns (bool) {}
 
     // function join(bytes _state, address _responder) public returns (bool) {}

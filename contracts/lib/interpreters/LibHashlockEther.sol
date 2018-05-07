@@ -1,8 +1,6 @@
 pragma solidity ^0.4.23;
 
-import "./LibInterpreterInterface.sol";
-
-contract LibHashlockEther is LibInterpreterInterface {
+library LibHashlockEther {
     // State
     // [0-31] isClose flag
     // [32-63] sequence

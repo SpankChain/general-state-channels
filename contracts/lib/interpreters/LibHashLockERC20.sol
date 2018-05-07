@@ -1,9 +1,8 @@
 pragma solidity ^0.4.23;
 
-import "./LibInterpreterInterface.sol";
 import "../token/HumanStandardToken.sol";
 
-contract LibHashLockERC20 is LibInterpreterInterface {
+library LibHashLockERC20 {
     // State
     // [0-31] isClose flag
     // [32-63] sequence

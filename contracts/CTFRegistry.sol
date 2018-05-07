@@ -20,6 +20,7 @@ contract CTFRegistry {
         address a;
         address b;
         bytes memory c;
+        
         (a, b) = _decodeAddresses(_state);
         (c) = _decodeContractCode(_state);
 

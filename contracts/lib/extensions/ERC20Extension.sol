@@ -1,9 +1,8 @@
 pragma solidity ^0.4.23;
 
-import "./ExtensionInterface.sol";
 import "../token/HumanStandardToken.sol";
 
-contract ERC20Extension is ExtensionInterface {
+library ERC20Extension {
     // TODO: Update byte sequence
     function getTokenAddress(bytes _s) public pure returns (address _token) {
         assembly {
@@ -87,7 +86,14 @@ contract ERC20Extension is ExtensionInterface {
         require(getTotal(_state) == _t.balanceOf(this), 'token total deposited does not match state balance');
     }
 
-    function finalizeByzantine(bytes _state) public returns (bool) {
+    function finalizeByzantine(bytes _state, address _metachannel) public returns (bool) {
+        HumanStandardToken _t = HumanStandardToken(getTokenAddress(_state));
+        require(getTotal(_state) <= _t.balanceOf(this), 'tried finalizing token state that does not match bnded value');
+
+        _t.transfer(address(_metachannel), getTotal(_state));
+    }
+
+    function finalize(bytes _state) public returns (bool) {
         address _a = getPartyA(_state);
         address _b = getPartyB(_state);
 
