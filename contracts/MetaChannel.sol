@@ -6,15 +6,6 @@ import "./CTFRegistry.sol";
 /// @title SpankChain Meta-channel - An interpreter designed to handle multiple state-channels
 /// @author Nathan Ginnever - <ginneversource@gmail.com>
 
-// sub-channel state
-// isClose
-// isForce
-// sequence
-// InterpreterLibAddress
-// channel ID
-// partyA
-// partyB
-
 contract MetaChannel {
 
     // sub-channel state

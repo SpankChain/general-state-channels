@@ -15,14 +15,6 @@ contract MultiSig {
 
     CTFRegistry public registry;
 
-    // STATE
-    //    32 isClose - Cooperative close flag
-    //    64 sequence
-    //    96 address 1
-    //    128 address 2
-    //    160 Meta Channel CTF address
-    //    192 Sub-Channel Root Hash
-    //
     // General State Sectors - Extensions must be able to handle these format
     // Sectors represent the final state of channels.
     //
@@ -108,7 +100,8 @@ contract MultiSig {
 
     // additive updates of monetary state
     function depositState(bytes _state, address _ext, uint8[2] sigV, bytes32[2] sigR, bytes32[2] sigS) public payable {
-        require(_assertExtension(_ext));
+        if(!_assertExtension(_ext)) { extensions.push(_ext); }
+
         require(isOpen == true, 'Tried adding state to a close msig wallet');
         address _partyA = _getSig(_state, sigV[0], sigR[0], sigS[0]);
         address _partyB = _getSig(_state, sigV[1], sigR[1], sigS[1]);
