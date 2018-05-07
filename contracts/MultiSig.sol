@@ -147,6 +147,21 @@ contract MultiSig {
         _finalizeSubchannel(_state, _ext);
     }
 
+    function closeWithMetachannel() public {
+        // TODO send all remaining msig funds to challenger to punish counterparty from dropping off
+        // this prevents the counterparty knowing that it would cost more to go on chain than the 
+        // value that has been exchanged in a subchannel. Use the msig balance as a bond of trust
+        MetaChannel deployedMetaChannel = MetaChannel(registry.resolveAddress(metachannel));
+
+        uint isClosed;
+        bytes memory _state;
+        isClosed = deployedMetaChannel.isClosed();
+        require(isClosed == 1);
+        _state = deployedMetaChannel.state();
+
+        _finalizeAll(_state);
+    }
+
     // Internal 
 
     function _finalizeAll(bytes _s) internal {

@@ -158,7 +158,7 @@ contract('Test Ether Payments', function(accounts) {
     ss0 = subchannelInputs
     ss0marshall = Utils.marshallState(subchannelInputs)
     
-    var hash = web3.sha3(s0marshall, {encoding: 'hex'})
+    var hash = web3.sha3(ss0marshall, {encoding: 'hex'})
     var buf = Utils.hexToBuffer(hash)
     var elems = []
     elems.push(buf)

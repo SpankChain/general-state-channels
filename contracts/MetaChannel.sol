@@ -36,7 +36,7 @@ contract MetaChannel {
     // meta-channel state
     address public partyA; // Address of first channel participant
     address public partyB; // Address of second channel participant
-    uint public settlementPeriodLength; // How long challengers have to reply to settle engagement
+    uint public settlementPeriodLength = 0; // How long challengers have to reply to settle engagement
     bytes32 public stateRoot; // The merkle root of all sub-channel state
     uint public isClosed;
     bytes public state;
@@ -226,44 +226,44 @@ contract MetaChannel {
 
     // /// --- Close Meta Channel Functions
 
-    // function startSettle(bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
-    //     address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
-    //     address _partyB = _getSig(_state, _v[1], _r[1], _s[1]);
+    function startSettle(bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
+        address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
+        address _partyB = _getSig(_state, _v[1], _r[1], _s[1]);
 
-    //     require(_hasAllSigs(_partyA, _partyB));
+        require(_hasAllSigs(_partyA, _partyB));
 
-    //     require(isClosed == 0);
-    //     require(isInSettlementState == 0);
+        require(isClosed == 0);
+        require(isInSettlementState == 0);
 
-    //     state = _state;
+        state = _state;
 
-    //     isInSettlementState = 1;
-    //     settlementPeriodEnd = now + settlementPeriodLength;
-    // }
+        isInSettlementState = 1;
+        settlementPeriodEnd = now + settlementPeriodLength;
+    }
 
-    // function challengeSettle(bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
-    //     address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
-    //     address _partyB = _getSig(_state, _v[1], _r[1], _s[1]);
+    function challengeSettle(bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
+        address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
+        address _partyB = _getSig(_state, _v[1], _r[1], _s[1]);
 
-    //     require(_hasAllSigs(_partyA, _partyB));
+        require(_hasAllSigs(_partyA, _partyB));
 
-    //     require(isInSettlementState == 1);
-    //     require(settlementPeriodEnd <= now);
+        require(isInSettlementState == 1);
+        require(settlementPeriodEnd <= now);
 
-    //     require(_getSequence(_state) > sequence);
+        require(_getSequence(_state) > sequence);
 
-    //     settlementPeriodEnd = now + settlementPeriodLength;
-    //     state = _state;
-    //     sequence++;
-    // }
+        settlementPeriodEnd = now + settlementPeriodLength;
+        state = _state;
+        sequence++;
+    }
 
-    // function closeWithTimeout() public {
-    //     require(settlementPeriodEnd <= now);
-    //     require(isClosed == 0);
-    //     require(isInSettlementState == 1);
+    function closeWithTimeout() public {
+        require(settlementPeriodEnd <= now);
+        require(isClosed == 0);
+        require(isInSettlementState == 1);
 
-    //     isClosed = 1;
-    // }
+        isClosed = 1;
+    }
 
     // Internal Functions
     function _getInterpreterAddress(bytes _s) public pure  returns (address _ctf) {
