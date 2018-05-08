@@ -150,6 +150,7 @@ contract('Test Disputed Ether Payments', function(accounts) {
     subchannelInputs.push(ethChannelID) // ID of subchannel
     subchannelInputs.push(metachannelCTFaddress) // counterfactual metachannel address
     subchannelInputs.push(reg.address) // CTF registry address
+    subchannelInputs.push('0x0') // subchannel tx roothash
     subchannelInputs.push(partyA) // partyA in the subchannel
     subchannelInputs.push(partyB) // partyB in the subchannel
     subchannelInputs.push(web3.toWei(0, 'ether')) // balance of party A in subchannel (ether)
@@ -197,6 +198,7 @@ contract('Test Disputed Ether Payments', function(accounts) {
     subchannelInputs.push(ethChannelID) // ID of subchannel
     subchannelInputs.push(metachannelCTFaddress) // counterfactual metachannel address
     subchannelInputs.push(reg.address) // CTF registry address
+    subchannelInputs.push('0x0') // subchannel tx roothash
     subchannelInputs.push(partyA) // partyA in the subchannel
     subchannelInputs.push(partyB) // partyB in the subchannel
     subchannelInputs.push(web3.toWei(1, 'ether')) // balance of party A in subchannel (ether)

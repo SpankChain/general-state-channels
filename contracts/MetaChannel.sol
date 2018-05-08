@@ -19,6 +19,7 @@ contract MetaChannel {
         address CTFaddress;
         uint subSettlementPeriodLength;
         uint subSettlementPeriodEnd;
+        uint settledAt;
         bytes subState;
     }
 
@@ -183,22 +184,27 @@ contract MetaChannel {
         require(address(subChannels[_channelID].CTFaddress).delegatecall(bytes4(keccak256("finalizeState(bytes)")), bytes32(32), bytes32(_length), _s));
 
         subChannels[_channelID].isSubClose = 1;
-        subChannels[_channelID].isSubInSettlementState == 0;
+        subChannels[_channelID].isSubInSettlementState = 0;
+        subChannels[_channelID].settledAt = now;
 
         // return bond if challenge received no response
         if(subChannels[_channelID].challenger != 0x0) { subChannels[_channelID].challenger.transfer(1 ether); }
     }
 
-
+    // send ether balance
+    // assumptions:
+    //   - Channels are single directional
+    //   - party A is always paying party B
     function updateHTLCBalances(bytes _proof, uint _channelID, uint256 _lockedNonce, uint256 _amount, bytes32 _hash, uint256 _timeout, bytes32 _secret) public returns (bool) {
         require(subChannels[_channelID].isSubInSettlementState == 0);
         require(subChannels[_channelID].isSubClose == 1);
         // require that the transaction timeout has not expired
-        require(now < _timeout);
+        require(now < subChannels[_channelID].settledAt + _timeout);
         // be sure the tx nonce lines up with the interpreters sequence
+        // initially this will be 0
         require(_lockedNonce == subChannels[_channelID].lockedNonce);
 
-        bytes32 _lockRoot = _getRoot(subChannels[_channelID].subState);
+        bytes32 _lockRoot = _getSubRoot(subChannels[_channelID].subState);
         
         bytes32 _txHash = keccak256(_lockedNonce, _amount, _hash, _timeout);
         require(_isContained(_txHash, _proof, _lockRoot));
@@ -206,12 +212,16 @@ contract MetaChannel {
         // no need to refund?, just don't update the state balance
 
         // redeem case
-        require(keccak256(_secret) == _hash);
+        //require(keccak256(_secret) == _hash);
 
-        require(address(subChannels[_channelID].CTFaddress).delegatecall(bytes4(keccak256("update(address, uint256)")), partyB, _amount));
-
+        partyB.transfer(_amount);
         subChannels[_channelID].lockedNonce++;
 
+        return true;
+    }
+
+    // TODO allow Alice to come online and reclaim locked funds
+    function finalizeHTLCupdates() public returns (bool) {
         return true;
     }
 
@@ -319,6 +329,12 @@ contract MetaChannel {
         }
     }
 
+    function _getSubRoot(bytes _state) internal pure returns (bytes32 _root){
+        assembly {
+            _root := mload(add(_state, 288))
+        }
+    }
+
     function _getSig(bytes _d, uint8 _v, bytes32 _r, bytes32 _s) internal pure returns(address) {
         bytes memory prefix = "\x19Ethereum Signed Message:\n32";
         bytes32 h = keccak256(_d);
@@ -346,6 +362,7 @@ contract MetaChannel {
         address subCTFaddress,
         uint subSettlementPeriodLength,
         uint subSettlementPeriodEnd,
+        uint settledAt,
         bytes subState
     ) {
         SubChannel storage g = subChannels[_channelID];
@@ -359,6 +376,7 @@ contract MetaChannel {
             g.CTFaddress,
             g.subSettlementPeriodLength,
             g.subSettlementPeriodEnd,
+            g.settledAt,
             g.subState
         );
     }
