@@ -48,13 +48,13 @@ library LibBidirectionalEther {
 
     function getBalanceA(bytes _s) public pure returns(uint256 _balanceA) {
         assembly {
-            _balanceA := mload(add(_s, 352))
+            _balanceA := mload(add(_s, 384))
         }
     }
 
     function getBalanceB(bytes _s) public pure returns(uint256 _balanceB) {
         assembly {
-            _balanceB := mload(add(_s, 384))
+            _balanceB := mload(add(_s, 416))
         }
     }
 
@@ -63,8 +63,8 @@ library LibBidirectionalEther {
         uint256 _b;
 
         assembly {
-            _a := mload(add(_s, 352))
-            _b := mload(add(_s, 384))
+            _a := mload(add(_s, 384))
+            _b := mload(add(_s, 416))
         }
 
         // TODO: safemath

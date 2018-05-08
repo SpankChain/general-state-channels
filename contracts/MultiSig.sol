@@ -132,7 +132,7 @@ contract MultiSig {
 
         uint isSettle;
         bytes memory _state;
-        (,isSettle,,,,,,,,_state) = deployedMetaChannel.getSubChannel(_subchannelID);
+        (,isSettle,,,,,,,,,_state) = deployedMetaChannel.getSubChannel(_subchannelID);
         require(isSettle == 1);
 
         address _ext = _getInterpreter(_state);
