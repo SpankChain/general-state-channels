@@ -1,6 +1,7 @@
 # general-state-channels
 
 <div>
+
 [![Build Status](https://travis-ci.org/NFhbar/general-state-channels.svg?branch=master)](https://travis-ci.org/NFhbar/general-state-channels)
 [![Coverage Status](https://coveralls.io/repos/github/NFhbar/general-state-channels/badge.svg?branch=master)](https://coveralls.io/github/NFhbar/general-state-channels?branch=master)
 

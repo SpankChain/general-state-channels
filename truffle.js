@@ -1,5 +1,5 @@
-require('babel-register');
-require('babel-polyfill');
+require('babel-register')
+require('babel-polyfill')
 
 var test = true
 var rinkeby = true
@@ -59,5 +59,14 @@ module.exports = {
       network_id: "1",
       gas: 4700000
     }
+  },
+  solc: {
+      optimizer: {
+          enabled: true,
+          runs: 500
+      }
+  },
+  mocha: {
+      enableTimeouts: false
   }
-};
+}
