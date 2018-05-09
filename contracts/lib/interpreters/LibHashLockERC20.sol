@@ -9,13 +9,13 @@ library LibHashLockERC20 {
     // [64-95] timeout
     // [96-127] sender
     // [128-159] receiver
-    // [160-191] bond 
+    // [160-191] bond
     // [192-223] balance A
     // [224-255] balance B
     // [256-287] lockTXroot
     // [288-319] metachannelAddress
 
-    function finalizeState(bytes _s) returns (bool) {
+    function finalizeState(bytes _s) public pure returns (bool) {
         // Just dont send here, force the balace to be withdrawn from
         // a special function on the metachannel
         return true;

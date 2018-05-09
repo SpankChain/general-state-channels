@@ -1,0 +1,725 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Code coverage report for contracts/MultiSig.sol</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../prettify.css" />
+    <link rel="stylesheet" href="../base.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+<body>
+<div class='wrapper'>
+  <div class='pad1'>
+    <h1>
+      <a href="../index.html">all files</a> / <a href="index.html">contracts/</a> MultiSig.sol
+    </h1>
+    <div class='clearfix'>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">79.66% </span>
+        <span class="quiet">Statements</span>
+        <span class='fraction'>47/59</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">37.5% </span>
+        <span class="quiet">Branches</span>
+        <span class='fraction'>15/40</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">85.71% </span>
+        <span class="quiet">Functions</span>
+        <span class='fraction'>12/14</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">83.33% </span>
+        <span class="quiet">Lines</span>
+        <span class='fraction'>55/66</span>
+      </div>
+    </div>
+  </div>
+  <div class='status-line medium'></div>
+<pre><table class="coverage">
+<tr><td class="line-count quiet">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213
+214
+215
+216
+217
+218
+219
+220
+221</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">14×</span>
+<span class="cline-any cline-yes">14×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">14×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">14×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">14×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">pragma solidity ^0.4.23;
+&nbsp;
+import "./CTFRegistry.sol";
+import "./MetaChannel.sol";
+&nbsp;
+/// @title SpankChain General-State-Channel - A multisignature "wallet" for general state
+/// @author Nathan Ginnever - &lt;ginneversource@gmail.com&gt;
+&nbsp;
+// TODO: Timeout on init deposit return
+&nbsp;
+contract MultiSig {
+&nbsp;
+    string public constant NAME = "General State MultiSig";
+    string public constant VERSION = "0.0.1";
+&nbsp;
+    CTFRegistry public registry;
+&nbsp;
+    // General State Sectors - Extensions must be able to handle these format
+    // Sectors represent the final state of channels.
+    //
+    // Ether Balances - Sector type [0]
+    //    EthBalanceA
+    //    EthBalanceB
+    //
+    // Token Balances - Sector type [1]
+    //    numTokenTypes
+    //    tokenAddress
+    //    ERC20BalanceA
+    //    ERC20BalanceB
+    //    ...
+    //
+    // "Non-fungile" Objects - Sector type [2]
+    //    num721Objects
+    //    721TokenID
+    //    ...
+    //
+&nbsp;
+    // Extension modules act on final state agreements from the sub-channel outcomes
+&nbsp;
+    address public partyA;
+    address public partyB;
+    bytes32 public metachannel; // Counterfactual address of metachannel
+&nbsp;
+    // Require curated extensions to be used.
+    address[] public extensions;
+&nbsp;
+    bool public isOpen = false; // true when both parties have joined
+    bool public isPending = false; // true when waiting for counterparty to join agreement
+&nbsp;
+    constructor(bytes32 _metachannel, address _registry) public {
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(_metachannel != 0x0, 'No metachannel CTF address provided to Msig constructor');
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(_registry != 0x0, 'No CTF Registry address provided to Msig constructor');
+        metachannel = _metachannel;
+        registry = CTFRegistry(_registry);
+    }
+&nbsp;
+&nbsp;
+    function openAgreement(bytes _state, address _ext, uint8 _v, bytes32 _r, bytes32 _s) public payable {
+        // only allow pre-deployed extension contracts
+        //require(_assertExtension(_ext), 'extension is not listed');
+         // require the channel is not open yet
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(isOpen == false, 'openAgreement already called, isOpen true');
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(isPending == false, 'openAgreement already called, isPending true');
+&nbsp;
+        isPending = true;
+        // check the account opening a channel signed the initial state
+        address _initiator = _getSig(_state, _v, _r, _s);
+&nbsp;
+        uint _length = _state.length;
+&nbsp;
+        // the open inerface can generalize an entry point for differenct kinds of checks
+        // on opening state
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(address(_ext).delegatecall(bytes4(keccak256("open(bytes)")), bytes32(32), bytes32(_length), _state));
+        partyA = _initiator;
+        // TODO: fix this
+        extensions.push(_ext);
+    }
+&nbsp;
+&nbsp;
+    function joinAgreement(bytes _state, address _ext, uint8 _v, bytes32 _r, bytes32 _s) public payable {
+        // only allow pre-deployed extension contracts
+        //require(_assertExtension(_ext));
+        // require the channel is not open yet
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(isOpen == false);
+&nbsp;
+        // no longer allow joining functions to be called
+        isOpen = true;
+&nbsp;
+        // check that the state is signed by the sender and sender is in the state
+        address _joiningParty = _getSig(_state, _v, _r, _s);
+&nbsp;
+&nbsp;
+        uint _length = _state.length;
+&nbsp;
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(address(_ext).delegatecall(bytes4(keccak256("join(bytes)")), bytes32(32), bytes32(_length), _state));
+        // Set storage for state
+        partyB = _joiningParty;
+    }
+&nbsp;
+&nbsp;
+    // additive updates of monetary state
+<span class="fstat-no" title="function not covered" >    function depositState(bytes _state, address _ext, uint8[2] sigV, bytes32[2] sigR, bytes32[2] sigS) public payabl</span>e {
+<span class="cstat-no" title="statement not covered" >        if(!_assertExtension(_ext)) { extensions.push(_ext); }</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        require(isOpen == true, 'Tried adding state to a close msig wallet')</span>;
+<span class="cstat-no" title="statement not covered" >        address _partyA = _getSig(_state, sigV[0], sigR[0], sigS[0])</span>;
+<span class="cstat-no" title="statement not covered" >        address _partyB = _getSig(_state, sigV[1], sigR[1], sigS[1])</span>;
+&nbsp;
+        // Require both signatures
+<span class="cstat-no" title="statement not covered" >        require(_hasAllSigs(_partyA, _partyB))</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        uint _length = _state.length</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        require(address(_ext).delegatecall(bytes4(keccak256("update(bytes)")), bytes32(32), bytes32(_length), _state))</span>;
+    }
+&nbsp;
+&nbsp;
+    function closeAgreement(bytes _state, uint8[2] sigV, bytes32[2] sigR, bytes32[2] sigS) public {
+        address _partyA = _getSig(_state, sigV[0], sigR[0], sigS[0]);
+        address _partyB = _getSig(_state, sigV[1], sigR[1], sigS[1]);
+&nbsp;
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(_isClose(_state), 'State did not have a signed close sentinel');
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(_hasAllSigs(_partyA, _partyB));
+&nbsp;
+        _finalizeAll(_state);
+        isOpen = false;
+    }
+&nbsp;
+&nbsp;
+    function closeSubchannel(uint _subchannelID) public {
+        MetaChannel deployedMetaChannel = MetaChannel(registry.resolveAddress(metachannel));
+&nbsp;
+        uint isSettle;
+        bytes memory _state;
+        (,isSettle,,,,,,,,,_state) = deployedMetaChannel.getSubChannel(_subchannelID);
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(isSettle == 1);
+&nbsp;
+        address _ext = _getInterpreter(_state);
+&nbsp;
+        _finalizeSubchannel(_state, _ext);
+    }
+&nbsp;
+    function closeWithMetachannel() public {
+        // TODO send all remaining msig funds to challenger to punish counterparty from dropping off
+        // this prevents the counterparty knowing that it would cost more to go on chain than the
+        // value that has been exchanged in a subchannel. Use the msig balance as a bond of trust
+        MetaChannel deployedMetaChannel = MetaChannel(registry.resolveAddress(metachannel));
+&nbsp;
+        uint isClosed;
+        bytes memory _state;
+        isClosed = deployedMetaChannel.isClosed();
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(isClosed == 1);
+        _state = deployedMetaChannel.state();
+&nbsp;
+        _finalizeAll(_state);
+    }
+&nbsp;
+    // Internal
+&nbsp;
+    function _finalizeAll(bytes _s) internal {
+        uint _length = _s.length;
+        for(uint i = 0; i &lt; extensions.length; i++) {
+            <span class="missing-if-branch" title="else path not taken" >E</span>require(address(extensions[i]).delegatecall(bytes4(keccak256("finalize(bytes)")), bytes32(32), bytes32(_length), _s));
+        }
+    }
+&nbsp;
+    // send all funds to metachannel if a channel is in dispute
+    function _finalizeSubchannel(bytes _s, address _ext) internal {
+        uint _length = _s.length;
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(address(_ext).delegatecall(bytes4(keccak256("finalizeByzantine(bytes)")), bytes32(32), bytes32(_length), _s));
+    }
+&nbsp;
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function _assertExtension(address _e) internal view returns (bool</span>) {
+<span class="cstat-no" title="statement not covered" >        bool _contained = false</span>;
+<span class="cstat-no" title="statement not covered" >        for(uint i=0; i&lt;extensions.length; i++) {</span>
+<span class="cstat-no" title="statement not covered" >            if(extensions[i] == _e) { <span class="cstat-no" title="statement not covered" >_contained = true</span>; }</span>
+        }
+<span class="cstat-no" title="statement not covered" >        return _contained;</span>
+    }
+&nbsp;
+    function _getInterpreter(bytes _s) public pure returns(address _int) {
+        assembly {
+            _int := mload(add(_s, 160))
+        }
+    }
+&nbsp;
+&nbsp;
+    function _hasAllSigs(address _a, address _b) internal view returns (bool) {
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(_a == partyA &amp;&amp; _b == partyB, 'Signatures do not match parties in state');
+&nbsp;
+        return true;
+    }
+&nbsp;
+&nbsp;
+    function _isClose(bytes _data) internal pure returns(bool) {
+        uint isClosed;
+&nbsp;
+        assembly {
+            isClosed := mload(add(_data, 32))
+        }
+&nbsp;
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(isClosed == 1);
+        return true;
+    }
+&nbsp;
+&nbsp;
+    function _getSig(bytes _d, uint8 _v, bytes32 _r, bytes32 _s) internal pure returns(address) {
+        bytes memory prefix = "\x19Ethereum Signed Message:\n32";
+        bytes32 h = keccak256(_d);
+&nbsp;
+        bytes32 prefixedHash = keccak256(prefix, h);
+&nbsp;
+        address a = ecrecover(prefixedHash, _v, _r, _s);
+&nbsp;
+        //address a = ECRecovery.recover(prefixedHash, _s);
+&nbsp;
+        return(a);
+    }
+}
+&nbsp;</pre></td></tr>
+</table></pre>
+<div class='push'></div><!-- for sticky footer -->
+</div><!-- /wrapper -->
+<div class='footer quiet pad2 space-top1 center small'>
+  Code coverage
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue May 08 2018 18:21:58 GMT-0700 (PDT)
+</div>
+</div>
+<script src="../prettify.js"></script>
+<script>
+window.onload = function () {
+        if (typeof prettyPrint === 'function') {
+            prettyPrint();
+        }
+};
+</script>
+<script src="../sorter.js"></script>
+</body>
+</html>

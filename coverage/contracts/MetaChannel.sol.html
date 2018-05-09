@@ -1,0 +1,1220 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Code coverage report for contracts/MetaChannel.sol</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../prettify.css" />
+    <link rel="stylesheet" href="../base.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+<body>
+<div class='wrapper'>
+  <div class='pad1'>
+    <h1>
+      <a href="../index.html">all files</a> / <a href="index.html">contracts/</a> MetaChannel.sol
+    </h1>
+    <div class='clearfix'>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">55.65% </span>
+        <span class="quiet">Statements</span>
+        <span class='fraction'>64/115</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">25% </span>
+        <span class="quiet">Branches</span>
+        <span class='fraction'>24/96</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">70.83% </span>
+        <span class="quiet">Functions</span>
+        <span class='fraction'>17/24</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">57.81% </span>
+        <span class="quiet">Lines</span>
+        <span class='fraction'>74/128</span>
+      </div>
+    </div>
+  </div>
+  <div class='status-line medium'></div>
+<pre><table class="coverage">
+<tr><td class="line-count quiet">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213
+214
+215
+216
+217
+218
+219
+220
+221
+222
+223
+224
+225
+226
+227
+228
+229
+230
+231
+232
+233
+234
+235
+236
+237
+238
+239
+240
+241
+242
+243
+244
+245
+246
+247
+248
+249
+250
+251
+252
+253
+254
+255
+256
+257
+258
+259
+260
+261
+262
+263
+264
+265
+266
+267
+268
+269
+270
+271
+272
+273
+274
+275
+276
+277
+278
+279
+280
+281
+282
+283
+284
+285
+286
+287
+288
+289
+290
+291
+292
+293
+294
+295
+296
+297
+298
+299
+300
+301
+302
+303
+304
+305
+306
+307
+308
+309
+310
+311
+312
+313
+314
+315
+316
+317
+318
+319
+320
+321
+322
+323
+324
+325
+326
+327
+328
+329
+330
+331
+332
+333
+334
+335
+336
+337
+338
+339
+340
+341
+342
+343
+344
+345
+346
+347
+348
+349
+350
+351
+352
+353
+354
+355
+356
+357
+358
+359
+360
+361
+362
+363
+364
+365
+366
+367
+368
+369
+370
+371
+372
+373
+374
+375
+376
+377
+378
+379
+380
+381
+382
+383
+384
+385
+386</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">8×</span>
+<span class="cline-any cline-yes">8×</span>
+<span class="cline-any cline-yes">8×</span>
+<span class="cline-any cline-yes">8×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10×</span>
+<span class="cline-any cline-yes">10×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">8×</span>
+<span class="cline-any cline-yes">8×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">&nbsp;
+pragma solidity ^0.4.23;
+&nbsp;
+import "./CTFRegistry.sol";
+&nbsp;
+/// @title SpankChain Meta-channel - An interpreter designed to handle multiple state-channels
+/// @author Nathan Ginnever - &lt;ginneversource@gmail.com&gt;
+&nbsp;
+contract MetaChannel {
+&nbsp;
+    // sub-channel state
+    struct SubChannel {
+        uint isSubClose;
+        uint isSubInSettlementState;
+        uint subSequence;
+        uint lockedNonce;
+        address[2] participants;
+        address challenger;
+        address CTFaddress;
+        uint subSettlementPeriodLength;
+        uint subSettlementPeriodEnd;
+        uint settledAt;
+        bytes subState;
+    }
+&nbsp;
+    mapping(uint =&gt; SubChannel) subChannels;
+&nbsp;
+    // meta-channel state
+    address public partyA; // Address of first channel participant
+    address public partyB; // Address of second channel participant
+    uint public settlementPeriodLength = 0; // How long challengers have to reply to settle engagement
+    bytes32 public stateRoot; // The merkle root of all sub-channel state
+    uint public isClosed;
+    bytes public state;
+    uint public sequence = 0;
+    // settlement state
+    uint public isInSettlementState = 0; // meta channel is in settling 1: Not settling 0
+    uint public isInSubSettlementState = 0; // sub channel is in settling 1: Not settling 0
+    CTFRegistry public registry; // Address of the CTF registry
+    uint public settlementPeriodEnd; // The time when challenges are no longer accepted after
+&nbsp;
+    constructor(address _registry, address _partyA, address _partyB) public {
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(_partyA != 0x0 &amp;&amp; _partyB != 0x0 &amp;&amp; _registry != 0x0);
+        registry = CTFRegistry(_registry);
+        partyA = _partyA;
+        partyB = _partyB;
+    }
+&nbsp;
+    // Allows for single signature of state, it can punish invalid transitions that where signed
+    // or it may reward a valid state advance if the counterparty does not respond.
+    // Slash the initiator if they do respond
+    //
+    // Must start settling the force push state with the double signed open state on the force push subchannel
+<span class="fstat-no" title="function not covered" >    function forcePushSubchannel(bytes _forceState, uint _channelID) public payab</span>le{
+        // require force pushes to have a bond
+<span class="cstat-no" title="statement not covered" >        require(msg.value == 1 ether)</span>;
+        // Make sure one of the parties has signed this subchannel update
+<span class="cstat-no" title="statement not covered" >        require(_hasOneSig(msg.sender))</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        require(_getSequence(_forceState) &gt; subChannels[_channelID].subSequence)</span>;
+&nbsp;
+        // this subchannel must have an agreement to allow force pushing state
+<span class="cstat-no" title="statement not covered" >        require(_allowForce(subChannels[_channelID].subState) == 1)</span>;
+&nbsp;
+        // sub-channel must be open
+<span class="cstat-no" title="statement not covered" >        require(subChannels[_channelID].isSubClose == 0)</span>;
+        // sub-channel must already be in a settle state, this should
+        // only be called once it is confirmed that a subchannel with both
+        // parties sigs with a forcepsuh flag has entered
+<span class="cstat-no" title="statement not covered" >        require(subChannels[_channelID].isSubInSettlementState == 1)</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        uint _length = _forceState.length</span>;
+<span class="cstat-no" title="statement not covered" >        require(address(subChannels[_channelID].CTFaddress).delegatecall(bytes4(keccak256("validateState(bytes)")), bytes32(32), bytes32(_length), _forceState))</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        subChannels[_channelID].challenger = msg.sender</span>;
+<span class="cstat-no" title="statement not covered" >        subChannels[_channelID].subSequence = _getSequence(_forceState)</span>;
+<span class="cstat-no" title="statement not covered" >        subChannels[_channelID].subState = _forceState</span>;
+<span class="cstat-no" title="statement not covered" >        subChannels[_channelID].subSettlementPeriodEnd = now + _getChallengePeriod(subChannels[_channelID].subState)</span>;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function challengeForcePush(bytes _forceState, uint _channelID) publi</span>c {
+        // Make sure one of the parties has signed this subchannel update
+<span class="cstat-no" title="statement not covered" >        require(_hasOneSig(msg.sender))</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        require(_getSequence(_forceState) &gt; subChannels[_channelID].subSequence)</span>;
+&nbsp;
+        // this subchannel must have an agreement to allow force pushing state
+<span class="cstat-no" title="statement not covered" >        require(_allowForce(subChannels[_channelID].subState) == 1)</span>;
+        // sub-channel must be open
+<span class="cstat-no" title="statement not covered" >        require(subChannels[_channelID].isSubClose == 0)</span>;
+        // sub-channel must already be in a settle state, this should
+        // only be called once it is confirmed that a subchannel with both
+        // parties sigs with a forcepsuh flag has entered
+<span class="cstat-no" title="statement not covered" >        require(subChannels[_channelID].isSubInSettlementState == 1)</span>;
+<span class="cstat-no" title="statement not covered" >        require(subChannels[_channelID].subSettlementPeriodEnd &gt; now)</span>;
+<span class="cstat-no" title="statement not covered" >        require(subChannels[_channelID].challenger != 0x0)</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        uint _length = _forceState.length</span>;
+<span class="cstat-no" title="statement not covered" >        require(address(subChannels[_channelID].CTFaddress).delegatecall(bytes4(keccak256("validateState(bytes)")), bytes32(32), bytes32(_length), _forceState))</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        subChannels[_channelID].subState = _forceState</span>;
+<span class="cstat-no" title="statement not covered" >        subChannels[_channelID].subSequence = _getSequence(_forceState)</span>;
+        // reset the challenger
+<span class="cstat-no" title="statement not covered" >        subChannels[_channelID].challenger = 0x0</span>;
+<span class="cstat-no" title="statement not covered" >        subChannels[_channelID].subSettlementPeriodEnd = now + _getChallengePeriod(subChannels[_channelID].subState)</span>;
+        // Punish the challenger for force pushing
+        msg.sender.transfer(1 ether);
+    }
+&nbsp;
+&nbsp;
+    // entry point for settlement of byzantine sub-channel
+    function startSettleStateSubchannel(bytes _proof, bytes _state, bytes _subchannel, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
+        // check that this state is signed
+        address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
+        address _partyB = _getSig(_state, _v[1], _r[1], _s[1]);
+&nbsp;
+        uint _channelID = _getChannelID(_subchannel);
+&nbsp;
+        // get roothash
+        stateRoot = _getRoot(_state);
+&nbsp;
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(_hasAllSigs(_partyA, _partyB));
+&nbsp;
+        // sub-channel must be open
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(subChannels[_channelID].isSubClose == 0);
+        // sub-channel must not already be in a settle state, this should
+        // only be called once to initiate settlement period
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(subChannels[_channelID].isSubInSettlementState == 0);
+&nbsp;
+        bytes32 _stateHash = keccak256(_subchannel);
+        // do proof of inclusing of sub-channel state in root state
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(_isContained(_stateHash, _proof, stateRoot));
+&nbsp;
+        // consider running some logic on the state from the interpreter to validate
+        // the new state obeys transition rules
+&nbsp;
+        subChannels[_channelID].CTFaddress = _getInterpreterAddress(_subchannel);
+&nbsp;
+        subChannels[_channelID].isSubInSettlementState = 1;
+        subChannels[_channelID].subSettlementPeriodEnd = now + _getChallengePeriod(_subchannel);
+        subChannels[_channelID].subState = _subchannel;
+        subChannels[_channelID].subSequence = _getSequence(_subchannel);
+        state = _state;
+    }
+&nbsp;
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function challengeSettleStateSubchannel(bytes _proof, bytes _state, bytes _subchannel, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) publi</span>c {
+        // check sigs
+<span class="cstat-no" title="statement not covered" >        address _partyA = _getSig(_state, _v[0], _r[0], _s[0])</span>;
+<span class="cstat-no" title="statement not covered" >        address _partyB = _getSig(_state, _v[1], _r[1], _s[1])</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        uint _channelID = _getChannelID(_subchannel)</span>;
+&nbsp;
+        // get roothash
+<span class="cstat-no" title="statement not covered" >        stateRoot = _getRoot(_state)</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        require(_hasAllSigs(_partyA, _partyB))</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        require(subChannels[_channelID].isSubInSettlementState == 1)</span>;
+<span class="cstat-no" title="statement not covered" >        require(subChannels[_channelID].subSettlementPeriodEnd &gt; now)</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        bytes32 _stateHash = keccak256(_subchannel)</span>;
+<span class="cstat-no" title="statement not covered" >        require(_isContained(_stateHash, _proof, stateRoot))</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        require(_getSequence(_subchannel) &gt; subChannels[_channelID].subSequence)</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        subChannels[_channelID].CTFaddress = _getInterpreterAddress(_subchannel)</span>;
+        // extend the challenge time for the sub-channel
+<span class="cstat-no" title="statement not covered" >        subChannels[_channelID].subSettlementPeriodEnd = now + _getChallengePeriod(_subchannel)</span>;
+<span class="cstat-no" title="statement not covered" >        subChannels[_channelID].subState = _subchannel</span>;
+<span class="cstat-no" title="statement not covered" >        subChannels[_channelID].subSequence = _getSequence(_subchannel)</span>;
+<span class="cstat-no" title="statement not covered" >        state = _state</span>;
+    }
+&nbsp;
+    // in the case of HTLC sub-channels, this must be called after the subchannel interpreter
+    // has had enough time to play out the locked txs and update is balances
+    function closeWithTimeoutSubchannel(uint _channelID) public {
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(subChannels[_channelID].subSettlementPeriodEnd &lt;= now);
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(subChannels[_channelID].isSubClose == 0);
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(subChannels[_channelID].isSubInSettlementState == 1);
+&nbsp;
+        uint _length = subChannels[_channelID].subState.length;
+        bytes memory _s = subChannels[_channelID].subState;
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(address(subChannels[_channelID].CTFaddress).delegatecall(bytes4(keccak256("finalizeState(bytes)")), bytes32(32), bytes32(_length), _s));
+&nbsp;
+        subChannels[_channelID].isSubClose = 1;
+        subChannels[_channelID].isSubInSettlementState = 0;
+        subChannels[_channelID].settledAt = now;
+&nbsp;
+        // return bond if challenge received no response
+        <span class="missing-if-branch" title="if path not taken" >I</span>if(subChannels[_channelID].challenger != 0x0) { subChannels[_channelID].challenger.transfer(1 ether); }
+    }
+&nbsp;
+    // send ether balance
+    // assumptions:
+    //   - Channels are single directional
+    //   - party A is always paying party B
+    function updateHTLCBalances(bytes _proof, uint _channelID, uint256 _lockedNonce, uint256 _amount, bytes32 _hash, uint256 _timeout, bytes32 _secret) public returns (bool) {
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(subChannels[_channelID].isSubInSettlementState == 0);
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(subChannels[_channelID].isSubClose == 1);
+        // require that the transaction timeout has not expired
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(now &lt; subChannels[_channelID].settledAt + _timeout);
+        // be sure the tx nonce lines up with the interpreters sequence
+        // initially this will be 0
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(_lockedNonce == subChannels[_channelID].lockedNonce);
+&nbsp;
+        bytes32 _lockRoot = _getSubRoot(subChannels[_channelID].subState);
+&nbsp;
+        bytes32 _txHash = keccak256(_lockedNonce, _amount, _hash, _timeout);
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(_isContained(_txHash, _proof, _lockRoot));
+&nbsp;
+        // no need to refund?, just don't update the state balance
+&nbsp;
+        // redeem case
+        //require(keccak256(_secret) == _hash);
+&nbsp;
+        partyB.transfer(_amount);
+        subChannels[_channelID].lockedNonce++;
+&nbsp;
+        return true;
+    }
+&nbsp;
+    // TODO allow Alice to come online and reclaim locked funds
+<span class="fstat-no" title="function not covered" >    function finalizeHTLCupdates() public pure returns (bool</span>) {
+<span class="cstat-no" title="statement not covered" >        return true;</span>
+    }
+&nbsp;
+    // /// --- Close Meta Channel Functions
+&nbsp;
+    function startSettle(bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) public {
+        address _partyA = _getSig(_state, _v[0], _r[0], _s[0]);
+        address _partyB = _getSig(_state, _v[1], _r[1], _s[1]);
+&nbsp;
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(_hasAllSigs(_partyA, _partyB));
+&nbsp;
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(isClosed == 0);
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(isInSettlementState == 0);
+&nbsp;
+        state = _state;
+&nbsp;
+        isInSettlementState = 1;
+        settlementPeriodEnd = now + settlementPeriodLength;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function challengeSettle(bytes _state, uint8[2] _v, bytes32[2] _r, bytes32[2] _s) publi</span>c {
+<span class="cstat-no" title="statement not covered" >        address _partyA = _getSig(_state, _v[0], _r[0], _s[0])</span>;
+<span class="cstat-no" title="statement not covered" >        address _partyB = _getSig(_state, _v[1], _r[1], _s[1])</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        require(_hasAllSigs(_partyA, _partyB))</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        require(isInSettlementState == 1)</span>;
+<span class="cstat-no" title="statement not covered" >        require(settlementPeriodEnd &lt;= now)</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        require(_getSequence(_state) &gt; sequence)</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        settlementPeriodEnd = now + settlementPeriodLength</span>;
+<span class="cstat-no" title="statement not covered" >        state = _state</span>;
+        sequence++;
+    }
+&nbsp;
+    function closeWithTimeout() public {
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(settlementPeriodEnd &lt;= now);
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(isClosed == 0);
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(isInSettlementState == 1);
+&nbsp;
+        isClosed = 1;
+    }
+&nbsp;
+    // Internal Functions
+    function _getInterpreterAddress(bytes _s) public pure  returns (address _ctf) {
+        assembly {
+            _ctf := mload(add(_s, 160))
+        }
+    }
+&nbsp;
+    function _getChannelID(bytes _s) public pure returns (uint _id) {
+        assembly {
+            _id := mload(add(_s, 192))
+        }
+    }
+&nbsp;
+    function _getSequence(bytes _data) public pure returns (uint _seq) {
+        assembly {
+            _seq := mload(add(_data, 64))
+        }
+    }
+&nbsp;
+    function _getChallengePeriod(bytes _data) public pure returns (uint _length) {
+        assembly {
+            _length := mload(add(_data, 128))
+        }
+    }
+&nbsp;
+&nbsp;
+    function _isContained(bytes32 _hash, bytes _proof, bytes32 _root) internal pure returns (bool) {
+        bytes32 cursor = _hash;
+        bytes32 proofElem;
+&nbsp;
+        for (uint256 i=64; i&lt;=_proof.length; i+=32) {
+            assembly { proofElem := mload(add(_proof, i)) }
+&nbsp;
+            if (cursor &lt; proofElem) {
+                cursor = keccak256(cursor, proofElem);
+            } else {
+                cursor = keccak256(proofElem, cursor);
+            }
+        }
+&nbsp;
+        return cursor == _root;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function _allowForce(bytes _state) internal pure returns (uint _isForce</span>) {
+        assembly { _isForce := mload(add(_state, 96))}
+    }
+&nbsp;
+    function _hasAllSigs(address _a, address _b) internal view returns (bool) {
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(_a == partyA &amp;&amp; _b == partyB);
+        return true;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function _hasOneSig(address _c) internal view returns (bool</span>) {
+<span class="cstat-no" title="statement not covered" >        require(_c == partyA || _c == partyB)</span>;
+<span class="cstat-no" title="statement not covered" >        return true;</span>
+    }
+&nbsp;
+    function _getRoot(bytes _state) internal pure returns (bytes32 _root){
+        assembly {
+            _root := mload(add(_state, 192))
+        }
+    }
+&nbsp;
+    function _getSubRoot(bytes _state) internal pure returns (bytes32 _root){
+        assembly {
+            _root := mload(add(_state, 288))
+        }
+    }
+&nbsp;
+    function _getSig(bytes _d, uint8 _v, bytes32 _r, bytes32 _s) internal pure returns(address) {
+        bytes memory prefix = "\x19Ethereum Signed Message:\n32";
+        bytes32 h = keccak256(_d);
+&nbsp;
+        bytes32 prefixedHash = keccak256(prefix, h);
+&nbsp;
+        address a = ecrecover(prefixedHash, _v, _r, _s);
+&nbsp;
+        //address a = ECRecovery.recover(prefixedHash, _s);
+&nbsp;
+        return(a);
+    }
+&nbsp;
+    function getSubChannel(uint _channelID)
+        external
+        view
+        returns
+    (
+        uint isSubClose,
+        uint isSubInSettlementState,
+        uint subSequence,
+        uint lockedNonce,
+        address[2] participants,
+        address challenger,
+        address subCTFaddress,
+        uint subSettlementPeriodLength,
+        uint subSettlementPeriodEnd,
+        uint settledAt,
+        bytes subState
+    ) {
+        SubChannel storage g = subChannels[_channelID];
+        return (
+            g.isSubClose,
+            g.isSubInSettlementState,
+            g.subSequence,
+            g.lockedNonce,
+            g.participants,
+            g.challenger,
+            g.CTFaddress,
+            g.subSettlementPeriodLength,
+            g.subSettlementPeriodEnd,
+            g.settledAt,
+            g.subState
+        );
+    }
+&nbsp;
+    function() payable public {}
+}
+&nbsp;</pre></td></tr>
+</table></pre>
+<div class='push'></div><!-- for sticky footer -->
+</div><!-- /wrapper -->
+<div class='footer quiet pad2 space-top1 center small'>
+  Code coverage
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue May 08 2018 18:21:58 GMT-0700 (PDT)
+</div>
+</div>
+<script src="../prettify.js"></script>
+<script>
+window.onload = function () {
+        if (typeof prettyPrint === 'function') {
+            prettyPrint();
+        }
+};
+</script>
+<script src="../sorter.js"></script>
+</body>
+</html>
