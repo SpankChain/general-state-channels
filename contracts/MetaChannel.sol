@@ -39,7 +39,7 @@ contract MetaChannel {
     CTFRegistry public registry; // Address of the CTF registry
     uint public settlementPeriodEnd; // The time when challenges are no longer accepted after
 
-    constructor(address _registry, address _partyA, address _partyB) {
+    constructor(address _registry, address _partyA, address _partyB) public {
         require(_partyA != 0x0 && _partyB != 0x0 && _registry != 0x0);
         registry = CTFRegistry(_registry);
         partyA = _partyA;
@@ -65,7 +65,7 @@ contract MetaChannel {
         // sub-channel must be open
         require(subChannels[_channelID].isSubClose == 0);
         // sub-channel must already be in a settle state, this should
-        // only be called once it is confirmed that a subchannel with both 
+        // only be called once it is confirmed that a subchannel with both
         // parties sigs with a forcepsuh flag has entered
         require(subChannels[_channelID].isSubInSettlementState == 1);
 
@@ -85,11 +85,11 @@ contract MetaChannel {
         require(_getSequence(_forceState) > subChannels[_channelID].subSequence);
 
         // this subchannel must have an agreement to allow force pushing state
-        require(_allowForce(subChannels[_channelID].subState) == 1);     
+        require(_allowForce(subChannels[_channelID].subState) == 1);
         // sub-channel must be open
         require(subChannels[_channelID].isSubClose == 0);
         // sub-channel must already be in a settle state, this should
-        // only be called once it is confirmed that a subchannel with both 
+        // only be called once it is confirmed that a subchannel with both
         // parties sigs with a forcepsuh flag has entered
         require(subChannels[_channelID].isSubInSettlementState == 1);
         require(subChannels[_channelID].subSettlementPeriodEnd > now);
@@ -97,7 +97,7 @@ contract MetaChannel {
 
         uint _length = _forceState.length;
         require(address(subChannels[_channelID].CTFaddress).delegatecall(bytes4(keccak256("validateState(bytes)")), bytes32(32), bytes32(_length), _forceState));
-        
+
         subChannels[_channelID].subState = _forceState;
         subChannels[_channelID].subSequence = _getSequence(_forceState);
         // reset the challenger
@@ -131,7 +131,7 @@ contract MetaChannel {
         // do proof of inclusing of sub-channel state in root state
         require(_isContained(_stateHash, _proof, stateRoot));
 
-        // consider running some logic on the state from the interpreter to validate 
+        // consider running some logic on the state from the interpreter to validate
         // the new state obeys transition rules
 
         subChannels[_channelID].CTFaddress = _getInterpreterAddress(_subchannel);
@@ -205,7 +205,7 @@ contract MetaChannel {
         require(_lockedNonce == subChannels[_channelID].lockedNonce);
 
         bytes32 _lockRoot = _getSubRoot(subChannels[_channelID].subState);
-        
+
         bytes32 _txHash = keccak256(_lockedNonce, _amount, _hash, _timeout);
         require(_isContained(_txHash, _proof, _lockRoot));
 
@@ -221,7 +221,7 @@ contract MetaChannel {
     }
 
     // TODO allow Alice to come online and reclaim locked funds
-    function finalizeHTLCupdates() public returns (bool) {
+    function finalizeHTLCupdates() public pure returns (bool) {
         return true;
     }
 
@@ -381,5 +381,5 @@ contract MetaChannel {
         );
     }
 
-    function() payable {}
+    function() payable public {}
 }

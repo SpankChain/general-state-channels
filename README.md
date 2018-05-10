@@ -1,5 +1,13 @@
 # general-state-channels
 
+<div>
+
+[![Build Status](https://travis-ci.org/NFhbar/general-state-channels.svg?branch=master)](https://travis-ci.org/NFhbar/general-state-channels)
+[![Coverage Status](https://coveralls.io/repos/github/NFhbar/general-state-channels/badge.svg?branch=master)](https://coveralls.io/github/NFhbar/general-state-channels?branch=master)
+
+</div>
+
+
 # WIP!
 
 A PoC combining insights derived from [L4](https://l4.ventures/) / [Counterfactual](https://counterfactual.com/), [Perun](https://www.perun.network/), [Machinomy](https://machinomy.com/), [Lightning Network](https://lightning.network/), [Eth](https://www.ethereum.org/foundation), [Raiden](https://raiden.network/), and [Spankchain](https://spankchain.com/) research. This system abstracts the state channel by allowing two participants to agree about final state in the channel. As long as both parties can come to consensus on this top level state, then many iterations of more complex logic may be played out that ultimately settles to this state. Only in cases that parties can't agree to the outcome of a state transition must they deploy the logic to settle the top state.
@@ -54,7 +62,7 @@ The [generalized state channel](https://medium.com/l4-media/generalized-state-ch
 
 ### Definitions:
 
-#### General State MultiSig: 
+#### General State MultiSig:
 
 The contract responsible for opening and closing channels. It holds bonded ether/tokens/state and executes the closing and intermidiate executions of state decided in final states of closed sub-channels as interpreted by the Meta-channel or off-chain client.
 
@@ -62,7 +70,7 @@ The contract responsible for opening and closing channels. It holds bonded ether
 
 Contracts that extend the general state multisig and are able to decode the general state portion of the msig state and execute any logic that may need to be executed. ie sending balances of closed sub-channels on-chain yet still keeping the channel open or updating the battle arena global stats of the results of fighting kittehs.
 
-#### Channel Registery: 
+#### Channel Registery:
 
 The registry solves the inability to link contracts before they are deployed. It provides a deterministic address needed to counterfactually instatiate contracts. If the address of a compiled contract could be known before hand, those addresses could be placed directly into state agreements and used in other counterfactually instantiated contracts directly.
 
@@ -70,11 +78,11 @@ The registry solves the inability to link contracts before they are deployed. It
 
 The (MC) is a counterfactually instatiated manager contract that is able to decode and track state on other counterfactually instatiated contracts.
 
-#### Sub-channel: 
+#### Sub-channel:
 
 An interpreter that is counterfactually instantiated and attached to the MC in state agreements in the form of a root hash. Sub-channels take on the form of traditional payment and state channels.
 
-#### Interpreters: 
+#### Interpreters:
 
 These are the contracts that hold the logic responsible for assembling state bytes into meaningful representations. i.e. constructing the balances in a payment channel or determining the winner of a game. They are counterfactually instantiated and provide judgement on valid state transitions.
 
@@ -110,7 +118,7 @@ Meta State
    160 Meta-channel CTF Address
    192 Sub-channel State Root Hash
    193+ General State - Extensions must be able to handle these formats
-   
+
    Eth Balance
    [
        balanceA
@@ -205,7 +213,7 @@ signature inputs
 quick close called by anyone with state that has a flag to close and all participant signatures
 
 Parameters:
-- bytes state: the checkpoint state 
+- bytes state: the checkpoint state
 signature inputs array
 - uint8[] v
 - bytes32[] r
@@ -221,7 +229,7 @@ called by anyone with valid signatures on state that does not have close flag
 
 Parameters:
 - bytes32 channelIndex: The channel of the subchannel in the state array. 0 = SPC settle
-- bytes state: the checkpoint state 
+- bytes state: the checkpoint state
 signature inputs array
 - uint8[] v
 - bytes32[] r
@@ -235,7 +243,7 @@ called by anyone within the settlement period that has a higher sequence numbere
 
 Parameters:
 - bytes32 channelID: The channel id that references the channel in the manager contract
-- bytes state: the checkpoint state 
+- bytes state: the checkpoint state
 signature inputs array
 - uint8[] v
 - bytes32[] r
@@ -281,7 +289,7 @@ All interpreter contracts must implement the following interface. Interpreters a
   - Fee for delaying system. (challenge economics)
   - Reducing capital lockup
 - Optimize signature verification
-- M of N-Party Sub-channels 
+- M of N-Party Sub-channels
 - P2P Messaging Layer Standards
 - Application integration for multiple channel state (browsers/wallets)
 

@@ -47,7 +47,7 @@ contract MultiSig {
     bool public isOpen = false; // true when both parties have joined
     bool public isPending = false; // true when waiting for counterparty to join agreement
 
-    constructor(bytes32 _metachannel, address _registry) {
+    constructor(bytes32 _metachannel, address _registry) public {
         require(_metachannel != 0x0, 'No metachannel CTF address provided to Msig constructor');
         require(_registry != 0x0, 'No CTF Registry address provided to Msig constructor');
         metachannel = _metachannel;
@@ -57,7 +57,7 @@ contract MultiSig {
 
     function openAgreement(bytes _state, address _ext, uint8 _v, bytes32 _r, bytes32 _s) public payable {
         // only allow pre-deployed extension contracts
-        //require(_assertExtension(_ext), 'extension is not listed');     
+        //require(_assertExtension(_ext), 'extension is not listed');
          // require the channel is not open yet
         require(isOpen == false, 'openAgreement already called, isOpen true');
         require(isPending == false, 'openAgreement already called, isPending true');
@@ -68,7 +68,7 @@ contract MultiSig {
 
         uint _length = _state.length;
 
-        // the open inerface can generalize an entry point for differenct kinds of checks 
+        // the open inerface can generalize an entry point for differenct kinds of checks
         // on opening state
         require(address(_ext).delegatecall(bytes4(keccak256("open(bytes)")), bytes32(32), bytes32(_length), _state));
         partyA = _initiator;
@@ -78,7 +78,7 @@ contract MultiSig {
 
 
     function joinAgreement(bytes _state, address _ext, uint8 _v, bytes32 _r, bytes32 _s) public payable {
-        // only allow pre-deployed extension contracts        
+        // only allow pre-deployed extension contracts
         //require(_assertExtension(_ext));
         // require the channel is not open yet
         require(isOpen == false);
@@ -91,7 +91,7 @@ contract MultiSig {
 
 
         uint _length = _state.length;
-        
+
         require(address(_ext).delegatecall(bytes4(keccak256("join(bytes)")), bytes32(32), bytes32(_length), _state));
         // Set storage for state
         partyB = _joiningParty;
@@ -106,7 +106,7 @@ contract MultiSig {
         address _partyA = _getSig(_state, sigV[0], sigR[0], sigS[0]);
         address _partyB = _getSig(_state, sigV[1], sigR[1], sigS[1]);
 
-        // Require both signatures 
+        // Require both signatures
         require(_hasAllSigs(_partyA, _partyB));
 
         uint _length = _state.length;
@@ -142,7 +142,7 @@ contract MultiSig {
 
     function closeWithMetachannel() public {
         // TODO send all remaining msig funds to challenger to punish counterparty from dropping off
-        // this prevents the counterparty knowing that it would cost more to go on chain than the 
+        // this prevents the counterparty knowing that it would cost more to go on chain than the
         // value that has been exchanged in a subchannel. Use the msig balance as a bond of trust
         MetaChannel deployedMetaChannel = MetaChannel(registry.resolveAddress(metachannel));
 
@@ -155,7 +155,7 @@ contract MultiSig {
         _finalizeAll(_state);
     }
 
-    // Internal 
+    // Internal
 
     function _finalizeAll(bytes _s) internal {
         uint _length = _s.length;
