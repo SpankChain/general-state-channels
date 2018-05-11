@@ -40,6 +40,7 @@ contract MultiSig {
     address public partyA;
     address public partyB;
     bytes32 public metachannel; // Counterfactual address of metachannel
+    bytes32 public stateHash;
 
     // Require curated extensions to be used.
     address[] public extensions;
@@ -54,7 +55,8 @@ contract MultiSig {
         registry = CTFRegistry(_registry);
     }
 
-
+    // for now this must be called by the opener of the account until a better call assembly is created that can 
+    // handle packing multiple parameters correctly
     function openAgreement(bytes _state, address _ext, uint8 _v, bytes32 _r, bytes32 _s) public payable {
         // only allow pre-deployed extension contracts
         //require(_assertExtension(_ext), 'extension is not listed');
@@ -65,8 +67,21 @@ contract MultiSig {
         isPending = true;
         // check the account opening a channel signed the initial state
         address _initiator = _getSig(_state, _v, _r, _s);
+        require(_initiator == msg.sender);
 
         uint _length = _state.length;
+
+        // bytes4 _sig = bytes4(keccak256("open(uint256)"));
+
+        // assembly {
+        //     let x := mload(0x40)
+        //     mstore(x, _sig)
+        //     mstore(add(x, 0x04), v)
+
+        //     let success := call(5000, _ext, 0, x, 0x20, x, 0x20)
+        //     c := mload(x)
+        //     mstore(0x40, add(x, 0x44))
+        // }
 
         // the open inerface can generalize an entry point for differenct kinds of checks
         // on opening state
@@ -74,6 +89,7 @@ contract MultiSig {
         partyA = _initiator;
         // TODO: fix this
         extensions.push(_ext);
+        stateHash = keccak256(_state);
     }
 
 
@@ -82,12 +98,14 @@ contract MultiSig {
         //require(_assertExtension(_ext));
         // require the channel is not open yet
         require(isOpen == false);
+        require(keccak256(_state) == stateHash);
 
         // no longer allow joining functions to be called
         isOpen = true;
 
         // check that the state is signed by the sender and sender is in the state
         address _joiningParty = _getSig(_state, _v, _r, _s);
+        require(_joiningParty == msg.sender);
 
 
         uint _length = _state.length;
