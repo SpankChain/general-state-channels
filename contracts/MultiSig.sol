@@ -57,6 +57,7 @@ contract MultiSig {
 
     // for now this must be called by the opener of the account until a better call assembly is created that can 
     // handle packing multiple parameters correctly
+    // Invalid extension contracts will not execute checks and may lock funds. TODO, check ext address is correct
     function openAgreement(bytes _state, address _ext, uint8 _v, bytes32 _r, bytes32 _s) public payable {
         // only allow pre-deployed extension contracts
         //require(_assertExtension(_ext), 'extension is not listed');
@@ -151,7 +152,7 @@ contract MultiSig {
         uint isSettle;
         bytes memory _state;
         (,isSettle,,,,,,,,,_state) = deployedMetaChannel.getSubChannel(_subchannelID);
-        require(isSettle == 1);
+        //require(isSettle == 1);
 
         address _ext = _getInterpreter(_state);
 

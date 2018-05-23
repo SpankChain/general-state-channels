@@ -14,7 +14,6 @@ contract MetaChannel {
         uint isSubInSettlementState;
         uint subSequence;
         uint lockedNonce;
-        address[2] participants;
         address challenger;
         address CTFaddress;
         uint subSettlementPeriodLength;
@@ -357,7 +356,6 @@ contract MetaChannel {
         uint isSubInSettlementState,
         uint subSequence,
         uint lockedNonce,
-        address[2] participants,
         address challenger,
         address subCTFaddress,
         uint subSettlementPeriodLength,
@@ -371,7 +369,6 @@ contract MetaChannel {
             g.isSubInSettlementState,
             g.subSequence,
             g.lockedNonce,
-            g.participants,
             g.challenger,
             g.CTFaddress,
             g.subSettlementPeriodLength,

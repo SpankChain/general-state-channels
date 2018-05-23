@@ -294,6 +294,7 @@ contract('Test Disputed Ether Payments', function(accounts) {
     var merkle = new MerkleTree(elems)
     var proof = [merkle.getRoot()]
     proof = Utils.marshallState(proof)
+    console.log(proof)
 
     var receipt = await metachannel.startSettleStateSubchannel(proof, s2marshall, ss1marshall, sigV, sigR, sigS)
     var gasUsed = receipt.receipt.gasUsed

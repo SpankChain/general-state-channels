@@ -13,6 +13,7 @@ const PaymentChannel = artifacts.require("./LibBidirectionalEther.sol")
 const EtherExtension = artifacts.require("./EtherExtension.sol")
 
 const Utils = require('./helpers/utils')
+const ethutil = require('ethereumjs-util')
 
 // State
 let reg
@@ -256,6 +257,43 @@ contract('Test Ether Payments', function(accounts) {
   it("both parties sign state: s3", async () => {
     s3sigA = await web3.eth.sign(partyA, web3.sha3(s3marshall, {encoding: 'hex'}))
     s3sigB = await web3.eth.sign(partyB, web3.sha3(s3marshall, {encoding: 'hex'}))
+
+    //     // bytes memory prefix = "\x19Ethereum Signed Message:\n32";
+    //     // bytes32 h = keccak256(_d);
+
+    //     // bytes32 prefixedHash = keccak256(prefix, h);
+
+    //     // address a = ecrecover(prefixedHash, _v, _r, _s);
+
+    // let state = '0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001e8524370b7caf8dc62e3effbca04ccc8e493ffe0000000000000000000000004c88305c5f9e4feb390e6ba73aaef4c64284b7bc2ac9e9cc73b053f1000bd69f308f0cee94e1894b6fe8f49ca8d3f63c9fb135d80000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000016345785d8a000000000000000000000000000000000000000000000000000002c68af0bb140000'
+    // s3sigA = await web3.eth.sign(accounts[0], web3.sha3(state, {encoding: 'hex'}))
+
+    // let stateHash = web3.sha3(state, {encoding: 'hex'})
+    // //stateHash = web3.sha3(stateHash, {encoding: 'hex'})
+    // //let h = web3.sha3(prefix+stateHash, {encoding: 'hex'})
+
+    // //let msg = Utils.hexToBuffer(stateHash)
+    // let msg = Utils.hexToBuffer(stateHash)
+    // //let prefix = Buffer.from('\u0019Ethereum Signed Message:\n' + msg.length.toString(), 'utf-8')
+    // //let msgHash = ethutil.sha3(Buffer.concat([prefix, msg]))
+    // let msgHash = ethutil.hashPersonalMessage(msg)
+    // //console.log(msgHash)
+    // let h = web3.sha3('\x19Ethereum Signed Message:\n' + stateHash.length.toString() + stateHash)
+
+    // let s1 = ethutil.ecsign(msgHash, new Buffer('c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3', 'hex'))
+
+    // console.log(s3sigA)
+    // console.log(ethutil.toRpcSig(s1.v, s1.r, s1.s))
+    // let rec = ethutil.ecrecover(ethutil.sha3(Buffer.from(`\x19Ethereum Signed Message:\n`+(s3marshall.length)+s3marshall, 32)), s1.v, s1.r, s1.s)
+    // console.log(web3.sha3(Utils.bufferToHex(rec), {encoding: 'hex'}))
+    //     // 0x0000000000000000000000000000000000000000000000000000000000000001
+    //     // 0x0000000000000000000000000000000000000000000000000000000000000003
+    //     // 0x000000000000000000000000f17f52151ebef6c7334fad080c5704d77216b732
+    //     // 0x000000000000000000000000c5fdf4076b8f3a5357c5e395ab970b5b54098fef
+    //     // 0x89c1aaef79c7f1b8ab4457d60de98a5cb7194b3ed1ed288e6c9a8653aca0d547
+    //     // 0x0000000000000000000000000000000000000000000000000000000000000000
+    //     // 0x00000000000000000000000000000000000000000000000098a7d9b8314c0000
+    //     // 0x00000000000000000000000000000000000000000000000107ad8f556c6c0000
   })
 
   it("closes the channel", async () => {
